@@ -16,7 +16,6 @@ module.exports = {
         'no-undef': 'error',
         'no-console': 'warn',
         'no-multi-spaces': 'error',
-        'object-curly-spacing': 'warn',
         'prettier/prettier': 'error',
     },
 };
