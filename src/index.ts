@@ -27,6 +27,6 @@ import { showTest } from './common/utils';
 // };
 
 module.exports = () => {
-    console.log('a');
+    console.log('aa');
     showTest();
 };
