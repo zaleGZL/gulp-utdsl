@@ -15,10 +15,10 @@
     },
     "lint-staged": {
         "src/**/*.js": [
-          "yarn lint"
+            "yarn lint"
         ],
         "src/**/*.ts": [
-          "yarn lint"
+            "yarn lint"
         ]
     },
     "repository": "git+https://github.com/zaleGZL/gulp-utdsl.git",
