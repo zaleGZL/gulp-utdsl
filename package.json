@@ -6,7 +6,7 @@
   "scripts": {
     "build": "rollup -c",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint 'src/**/*.{js,ts}'"
+    "lint": "eslint 'src/**/*.{js,ts,tsx}' --quiet --fix"
   },
   "husky": {
     "hooks": {
@@ -15,7 +15,6 @@
   },
   "lint-staged": {
     "*./src/**/*.{js,ts,json,css,less,md}": [
-      "prettier --write",
       "yarn lint"
     ]
   },
@@ -39,6 +38,8 @@
     "@typescript-eslint/eslint-plugin": "^3.2.0",
     "@typescript-eslint/parser": "^3.2.0",
     "eslint": "^7.2.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-prettier": "^3.1.3",
     "husky": "^4.2.5",
     "lint-staged": "^10.2.9",
     "prettier": "^2.0.5",
