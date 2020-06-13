@@ -1,4 +1,5 @@
 
-node_modules/
-.vscode/
-lib/
+node_modules
+.vscode
+lib
+yarn-error.log
