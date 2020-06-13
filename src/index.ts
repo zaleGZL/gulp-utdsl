@@ -1,11 +1,11 @@
 import through from 'through2';
 import { utdslOption } from './typings/index.d';
-import name from './common/utils';
+import { add } from './common/utils';
 
 const compile = (path: string, options: utdslOption) => {
     console.log('path', path);
     console.log('options', options);
-    console.log('namse', name);
+    console.log(add(1, 2));
 };
 
 module.exports = function (options: utdslOption) {
