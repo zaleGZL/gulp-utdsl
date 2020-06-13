@@ -22,7 +22,7 @@ export default [
         output: [
             {
                 file: path.resolve(__dirname, '../', projectConfig.libPath, 'index.js'),
-                format: 'umd',
+                format: projectConfig.defaultFormat,
                 name: packageName,
                 banner,
                 sourcemap: true,
@@ -55,7 +55,7 @@ export default [
                   {
                       file: path.resolve(__dirname, '../', projectConfig.libPath, 'index.min.js'),
 
-                      format: 'umd',
+                      format: projectConfig.defaultFormat,
                       name: packageName,
                       banner,
                   },

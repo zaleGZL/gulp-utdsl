@@ -5,7 +5,9 @@ import babel from '@rollup/plugin-babel';
 import typescript from 'rollup-plugin-typescript2';
 import replace from '@rollup/plugin-replace';
 import projectConfig from './project.config';
+import pkg from '../package.json';
 
+const externalPackageList = Object.keys(pkg[projectConfig.externalPackage] || {});
 const extensions = ['.js', '.jsx', '.ts', '.tsx'];
 const resolve = function (...args) {
     return path.resolve(__dirname, ...args);
@@ -13,6 +15,7 @@ const resolve = function (...args) {
 
 export default {
     input: resolve('../src/index.ts'),
+    external: projectConfig.useExternal ? externalPackageList : [],
     plugins: [
         typescript({
             tsconfig: path.resolve(__dirname, '../tsconfig.json'),
