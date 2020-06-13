@@ -5,7 +5,7 @@ import name from './common/utils';
 const compile = (path: string, options: utdslOption) => {
     console.log('path', path);
     console.log('options', options);
-    console.log('name', name);
+    console.log('namse', name);
 };
 
 module.exports = function (options: utdslOption) {
