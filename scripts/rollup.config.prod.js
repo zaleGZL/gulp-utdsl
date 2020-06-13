@@ -2,6 +2,7 @@ import filesize from 'rollup-plugin-filesize';
 import { uglify } from 'rollup-plugin-uglify';
 import { terser } from 'rollup-plugin-terser';
 import baseConfig from './rollup.config.base';
+import sourcemaps from 'rollup-plugin-sourcemaps';
 import projectConfig from './project.config';
 import pkg from '../package.json';
 import path from 'path';
@@ -33,6 +34,7 @@ export default [
                       format: 'cjs',
                       name: packageName,
                       banner,
+                      sourcemap: true,
                   }
                 : null,
             {
@@ -40,9 +42,10 @@ export default [
                 format: 'es',
                 name: packageName,
                 banner,
+                sourcemap: true,
             },
         ].filter((item) => !!item),
-        plugins: [...baseConfig.plugins, filesize()],
+        plugins: [...baseConfig.plugins, filesize(), sourcemaps()],
     },
     // 压缩版本
     projectConfig.isWebModule

@@ -6,7 +6,7 @@ import typescript from 'rollup-plugin-typescript2';
 import replace from '@rollup/plugin-replace';
 import projectConfig from './project.config';
 
-const extensions = ['.js', '.ts'];
+const extensions = ['.js', '.jsx', '.ts', '.tsx'];
 const resolve = function (...args) {
     return path.resolve(__dirname, ...args);
 };
@@ -17,6 +17,7 @@ export default {
         typescript({
             tsconfig: path.resolve(__dirname, '../tsconfig.json'),
             exclude: 'node_modules/**',
+            typescript: require('typescript'),
         }),
         replace({
             'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
