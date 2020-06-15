@@ -6,7 +6,7 @@ import { IUtdslConfig } from './../typings/index.d';
  * @param {string} fileContent 文件内容
  * @param {IUtdslConfig} config 配置文件
  */
-const getGrammarFromContent = (fileContent: string, config: IUtdslConfig): Array<string> => {
+export const getGrammarFromContent = (fileContent: string, config: IUtdslConfig): string[][] => {
     // 匹配对应注释的正则
     const commentReg = new RegExp(`\\/\\*\\*\\s?${config.commentMark}[\\s\\S]*?\\*\\/`, 'ig');
     const commentList = (fileContent || '').match(commentReg);
@@ -20,8 +20,21 @@ const getGrammarFromContent = (fileContent: string, config: IUtdslConfig): Array
         return comment
             .split(/\r?\n/)
             .map((item) => {
-                return item.trim();
+                let result = item.trim();
+
+                // 去掉开头的 '*' 部分
+                result = result.replace(/^\**/, '').trim();
+
+                // 去掉尾部的 ';' 字符
+                if (result.endsWith(';')) {
+                    result = result.slice(0, result.length - 1);
+                }
+
+                return result;
             })
-            .filter((item) => !!item);
+            .filter((item) => !!item)
+            .slice(1, -1);
     });
+
+    return commentLineList;
 };
