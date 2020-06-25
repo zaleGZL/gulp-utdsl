@@ -1,0 +1,31 @@
+path: src/biz-components/ad-manage-tab/src/adgroup-item-list/index.js
+isEsModule: true
+cases:
+    - name: g
+      target: get
+      age: 123
+      inputs:
+          - 'getList1:from:./data/data.js'
+          - '{name: "123"}'
+          - ''
+      mocks:
+          - mock: 'getList:from:./src/data.js -> test:from:./aaa/getList.js:'
+            type: function
+          - mock: ':from:./aaa/data.js -> mockData:from:./src/getList.js'
+            type: file
+            needOriginModule: false
+          - mock: 'common.wx.global.navigate:from:./src/data.js -> wx.global.navigate'
+            type: global
+      this: 'getListMockThis:from:./data/data.js'
+      prefixContent: 'dispatch:from:./data/template.js'
+      expect:
+          - 'wx.global:time: -> 0'
+          - 'res:time: -> 1'
+          - 'getList:call:[0][0]:hasProps: -> "test"'
+          - 'getList:call:[0][0]:equal: -> test:from:./data/data.js'
+          - 'getList:call:[0][0]:is: -> asd'
+          - 'getList:call:-:is: -> "asd"'
+          - 'getList:>: -> 5'
+          - 'getList:>=: -> 12'
+
+

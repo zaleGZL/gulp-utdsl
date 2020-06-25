@@ -21,5 +21,7 @@ module.exports = {
         'no-console': 'warn',
         'no-multi-spaces': 'error',
         'prettier/prettier': 'error',
+        '@typescript-eslint/no-explicit-any': 'off',
+        'no-var-requires': 0,
     },
 };

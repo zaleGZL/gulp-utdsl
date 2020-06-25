@@ -29,6 +29,13 @@
     },
     "homepage": "https://github.com/zaleGZL/gulp-utdsl#readme",
     "dependencies": {
+        "@types/fs-extra": "^9.0.1",
+        "@types/js-yaml": "^3.12.4",
+        "@types/lodash": "^4.14.157",
+        "@types/prettier": "^2.0.1",
+        "fs-extra": "^9.0.1",
+        "js-yaml": "^3.14.0",
+        "lodash": "^4.17.15",
         "through2": "^3.0.1"
     },
     "devDependencies": {

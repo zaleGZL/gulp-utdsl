@@ -1,11 +1,11 @@
+import { parseYaml } from './parser/yml';
+import path from 'path';
 import through from 'through2';
 import { utdslOption } from './typings/index.d';
-import { add } from './common/utils';
+import { compiler } from './compiler';
 
 const compile = (path: string, options: utdslOption) => {
-    console.log('path', path);
-    console.log('options', options);
-    console.log(add(1, 2));
+    compiler(path);
 };
 
 module.exports = function (options: utdslOption) {
@@ -23,3 +23,6 @@ module.exports = function (options: utdslOption) {
 
     return stream;
 };
+
+// const doc = parseYaml('/Users/guozeling/workspace/git/gulp-utdsl/src/__tests__/data/default-example.yaml');
+// console.log(doc);

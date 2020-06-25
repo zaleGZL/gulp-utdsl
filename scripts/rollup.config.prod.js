@@ -26,6 +26,7 @@ export default [
                 name: packageName,
                 banner,
                 sourcemap: true,
+                strict: false,
             },
             projectConfig.enabledOutputCjs
                 ? {
@@ -35,6 +36,7 @@ export default [
                       name: packageName,
                       banner,
                       sourcemap: true,
+                      strict: false,
                   }
                 : null,
             {
@@ -43,6 +45,7 @@ export default [
                 name: packageName,
                 banner,
                 sourcemap: true,
+                strict: false,
             },
         ].filter((item) => !!item),
         plugins: [...baseConfig.plugins, filesize(), sourcemaps()],
@@ -58,6 +61,7 @@ export default [
                       format: projectConfig.defaultFormat,
                       name: packageName,
                       banner,
+                      strict: false,
                   },
               ],
               plugins: [
