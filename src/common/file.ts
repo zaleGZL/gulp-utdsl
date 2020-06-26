@@ -1,15 +1,7 @@
 // import fs from 'fs-extra';
 import path from 'path';
-import { ICommonObj } from '../typings/index';
+import { ICommonObj, IGetImportFilePath, IGetFileImportPath } from '../typings/index';
 import { transFilePathToDirectory } from './utils';
-
-interface IGetFileImportPath {
-    filePath: string; // 被测试的文件路径
-    testDslAbsolutePath: string; // 测试 DSL 文件的绝对路径
-    projectConfig: ICommonObj; // 项目的配置文件
-    testCaseConfig: ICommonObj; // 测试 case 的配置
-    outputFileExt?: string; // 输出文件的扩展名
-}
 
 /**
  * 获取输出的测试文件路径
@@ -43,13 +35,6 @@ export const getOutputTestFilePath = (params: IGetFileImportPath): string => {
     return outputTestFilePath;
 };
 
-interface IGetImportFilePath {
-    filePath: string; // 配置中指定的路径
-    testFileAbsolutePath: string; // 输出的测试文件的绝对路径
-    testDslAbsolutePath: string; // 测试 DSL 文件的绝对路径
-    projectConfig: ICommonObj; // 项目的配置文件
-}
-
 /**
  * 获取导入的文件路径
  */
@@ -69,7 +54,7 @@ export const getImportFilePath = (params: IGetImportFilePath): string => {
         absoluteFilePath = path.resolve(projectConfig.filePathAbsolutePathPrefix, filePath);
     }
 
-    return path.relative(testFileAbsolutePath, absoluteFilePath);
+    return path.relative(path.dirname(testFileAbsolutePath), absoluteFilePath);
 };
 
 // /**

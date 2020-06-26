@@ -79,3 +79,18 @@ export const isVariableExpressionsString = (expression: string): boolean => {
 
     return true;
 };
+
+/**
+ * 判断数组内的元素是否有重复
+ * @param arr
+ */
+export const isRepeat = (arr: string[]): boolean => {
+    const hash: any = {};
+    for (const i in arr) {
+        if (hash[arr[i]]) {
+            return true;
+        }
+        hash[arr[i]] = true;
+    }
+    return false;
+};
