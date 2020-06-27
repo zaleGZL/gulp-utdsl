@@ -1,6 +1,8 @@
 export const OPERATION = {
     IMPORT: 'IMPORT', // import 导入
     IO: 'IO', // 输入和输出
+    INVOKE_TYPE: 'INVOKE_TYPE', // 调用方式
+    META: 'META', // 元信息
 };
 
 // UTDSL 语法的关键字
@@ -32,4 +34,19 @@ export const FUNCTION_PARAMS_COMPARE_OPERATION = {
 export const FUNCTION_PARAMS_COMPARE_OPERATION_MAP = {
     IS: 'IS',
     EQUAL: 'EQUAL',
+};
+
+// 支持的 invoke_type
+export const INVOKE_TYPE_LIST = ['default', 'render', 'promise(resolve)', 'promise(reject)', 'async'];
+export const INVOKE_TYPE_MAP = {
+    DEFAULT: 'default',
+    RENDER: 'render',
+    PROMISE_RESOLVE: 'promise(resolve)',
+    PROMISE_REJECT: 'promise(reject)',
+    ASYNC: 'async',
+};
+
+export const COMPARE_TYPE = {
+    IS: 'toBe',
+    EQUAL: 'toEqual',
 };

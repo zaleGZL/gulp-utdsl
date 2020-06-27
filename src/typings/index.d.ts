@@ -27,6 +27,7 @@ export interface IOperationDesc {
     variableName?: string; // 变量名称
     ioList?: IIoListItem[]; // IO 参数列表
     asName?: string; // 变量导入后需要替换的名称
+    value?: string; // 操作所对应的值
 }
 
 export interface IParamsDesc {

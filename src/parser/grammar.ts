@@ -19,6 +19,7 @@ import {
     EXPRESSION_OPERATION_NAME_LIST,
     FUNCTION_PARAMS_COMPARE_OPERATION,
     FUNCTION_PARAMS_COMPARE_OPERATION_MAP,
+    INVOKE_TYPE_LIST,
 } from '../common/constants';
 import { parseToCode } from './template';
 import { formatContentDescList } from './data-adapter';
@@ -174,9 +175,25 @@ export const parseFuncParams = (dataDesc: string): TParseFuncParamsResult => {
     }
 };
 
-// export const parseInvokeType = (invokeType) => {
+/**
+ *
+ * @param invokeType 调用方式
+ */
+export const parseInvokeType = (invokeType: string): IOperationDesc[] => {
+    const result: IOperationDesc[] = [];
 
-// }
+    // 检查下 invoke_type 是否合法
+    if (!INVOKE_TYPE_LIST.includes(invokeType)) {
+        throw new Error(`暂不支持所输入的 invokeType 参数 ${invokeType}.`);
+    }
+
+    result.push({
+        operation: OPERATION.INVOKE_TYPE,
+        value: invokeType,
+    });
+
+    return result;
+};
 
 /**
  * 解析主函数
@@ -184,9 +201,6 @@ export const parseFuncParams = (dataDesc: string): TParseFuncParamsResult => {
  */
 export const parse = (params: IParse): void => {
     const { testDslAbsolutePath, projectConfig, testCaseConfig, prettierConfig } = params;
-
-    // zale TODO: test
-    // console.log('params', JSON.stringify(params, undefined, 2));
 
     // 公共必填参数检查
     if (!_.isString(testCaseConfig.path)) {
@@ -210,7 +224,7 @@ export const parse = (params: IParse): void => {
         contentDescList.push({
             operation: OPERATION.IMPORT,
             path: testCaseConfig.path,
-            variableName: caseConfig.name,
+            variableName: caseConfig.target,
         });
 
         // 解析输出和输出 （IO）
@@ -227,13 +241,19 @@ export const parse = (params: IParse): void => {
             return;
         }
 
-        // zale TODO: test
-        console.log('caseConfig', JSON.stringify(caseConfig, undefined, 2));
-
         // 解析调用类型 (invokeType)
-        // if () {
-
-        // }
+        try {
+            contentDescList = contentDescList.concat(parseInvokeType(caseConfig.invokeType));
+        } catch (error) {
+            consoleOutput(
+                [
+                    `测试 DSL 文件 ${testDslAbsolutePath} 的 ${caseConfig.name} 的 invokeType 参数解析错误!`,
+                    `详细信息：`,
+                    error.message || '',
+                ].join('\n')
+            );
+            return;
+        }
 
         // 格式化测试描述对象（比如对路径进行转换）
         const formattedContentDescList = formatContentDescList({
@@ -244,37 +264,13 @@ export const parse = (params: IParse): void => {
         });
 
         // 解析测试文件的描述对象, 生成代码
-        const code = parseToCode(formattedContentDescList);
+        const code = parseToCode(formattedContentDescList, caseConfig);
 
         // 执行代码的格式化(可能会存在语法错误导致格式化失败)
         const prettieredCode = prettierCode(code, prettierConfig);
 
         // 代码写入文件
         fs.outputFileSync(outputTestFilePath, prettieredCode instanceof Error ? code : prettieredCode);
-
-        // console.log('contentDescList', JSON.stringify(contentDescList, undefined, 2));
-        // console.log('outputTestFilePath', outputTestFilePath);
-        // console.log('mainTestFileAbsolutePath', mainTestFileAbsolutePath);
-
-        // 获取待测试模块的路径
-        // const mainTestFileAbsolutePath = getImportFilePath({
-        //     filePath: testCaseConfig.path,
-        //     testFileAbsolutePath: outputTestFilePath,
-        //     testDslAbsolutePath,
-        //     projectConfig,
-        // });
-
-        // 看下文件是否存在，如果不存在则创建
-
-        // const testPath = getImportFilePath({
-        //     filePath: 'src/data/data.js',
-        //     testFileAbsolutePath: outputTestFilePath,
-        //     testDslAbsolutePath: testDslAbsolutePath,
-        //     projectConfig,
-        // });
-
-        // console.log('outputTestFilePath', outputTestFilePath);
-        // console.log('testPath', testPath);
     });
 
     return;
