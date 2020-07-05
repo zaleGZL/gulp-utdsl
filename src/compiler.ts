@@ -37,7 +37,7 @@ export const compiler = (path: string): void => {
     let testCaseConfig = parseYaml(path);
     if (testCaseConfig instanceof Error) {
         consoleOutput(`解析 ${path} 出错，存在语法错误，请检查文档修改文件内容.`);
-        console.log(testCaseConfig);
+        // console.log(testCaseConfig);
         return;
     } else {
         // 注入默认数据

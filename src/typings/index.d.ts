@@ -21,13 +21,25 @@ export interface IIoListItem {
     ioCompareType?: string; // IO 的判断类型
 }
 
+export interface IMockListItem {
+    type: string; // mock 的类型
+    targetPath?: string; // mock 的目标函数路径
+    targetName?: string; // mock 的目标函数名称
+    targetModuleName?: string; // mock 的目标模块导入名称
+    mockPath?: string; // mock 的函数路径
+    mockName?: string; // mock 的函数名称
+    mockExpression?: string; // mock 的函数对应的表达式
+}
+
 export interface IOperationDesc {
     operation: string; // 操作类型
     path?: string; // 路径
     variableName?: string; // 变量名称
     ioList?: IIoListItem[]; // IO 参数列表
+    mockList?: IMockListItem[]; // mock 列表
     asName?: string; // 变量导入后需要替换的名称
     value?: string; // 操作所对应的值
+    moduleAsName?: string; // 名称空间来引用导入模块的名称
 }
 
 export interface IParamsDesc {
@@ -50,6 +62,7 @@ export interface IDataParamsDesc {
 export interface IImportPathItem {
     variableName: string; // 变量导出的名字
     asName?: string; // 变量导入重命名的名字
+    moduleAsName?: string; // 名称空间来引用导入模块的名称
 }
 
 export interface IImportPathMap {
@@ -100,4 +113,24 @@ export interface IParse {
     projectConfig: ICommonObj; // 项目的配置文件
     testCaseConfig: ICommonObj; // 测试 case 的配置
     prettierConfig: ICommonObj; // prettier 的配置
+}
+
+export interface IMocksItem {
+    target: string; // 被 mock 的对象
+    mock: string; // mock 对象
+    type: string; // mock 的类型
+    needOriginModule: boolean; // mock 类型为 file 时，可以选择是否要保留源模块的数据（其它的数据可以进行覆盖）
+}
+
+export type TMock = IMocksItem[];
+
+export interface IParseFunctionTypesParams {
+    targetOperationDesc: IExpressOperationDesc; // 被 mock 的对象的操作描述
+    mockOperationDesc: IExpressOperationDesc; // mock 对象的操作描述
+    mockItem: IMocksItem; // mock 参数
+}
+
+export interface IParseTypesReturn {
+    mockDesc: IMockListItem; // mock 描述
+    operationList: IOperationDesc[]; // 其它内容描述对象列表
 }

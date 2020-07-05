@@ -20,10 +20,12 @@ import {
     FUNCTION_PARAMS_COMPARE_OPERATION,
     FUNCTION_PARAMS_COMPARE_OPERATION_MAP,
     INVOKE_TYPE_LIST,
+    EXPRESSION_OPERATION_MAP,
 } from '../common/constants';
 import { parseToCode } from './template';
 import { formatContentDescList } from './data-adapter';
 import { prettierCode } from '../common/index';
+import { parseMocks } from './mocks';
 
 /**
  * 解析 IO 参数
@@ -255,6 +257,20 @@ export const parse = (params: IParse): void => {
             return;
         }
 
+        // 解析 mock 对象 (mock)
+        try {
+            contentDescList = contentDescList.concat(parseMocks(caseConfig.mocks));
+        } catch (error) {
+            consoleOutput(
+                [
+                    `测试 DSL 文件 ${testDslAbsolutePath} 的 ${caseConfig.name} 的 mocks 参数解析错误!`,
+                    `详细信息：`,
+                    error.message || '',
+                ].join('\n')
+            );
+            return;
+        }
+
         // 格式化测试描述对象（比如对路径进行转换）
         const formattedContentDescList = formatContentDescList({
             contentDescList,
@@ -262,6 +278,9 @@ export const parse = (params: IParse): void => {
             testDslAbsolutePath,
             projectConfig,
         });
+
+        // zale TODO: test
+        console.log('formattedContentDescList', JSON.stringify(formattedContentDescList, undefined, 2));
 
         // 解析测试文件的描述对象, 生成代码
         const code = parseToCode(formattedContentDescList, caseConfig);
@@ -313,28 +332,37 @@ export const parserExpressionOperationDesc = (expression = ''): IExpressOperatio
         return new Error(`表达式 "${expression}" 中存在多个相同的操作符.`);
     }
 
+    let result: IExpressOperationDesc = {
+        value: '',
+    };
+
     // 只有一个操作符的情况
     if (matchOperationList.length === 1) {
         const [value, operationValue] = expression.split(matchOperationList[0].value);
-        return {
+        result = {
             value,
             [matchOperationList[0].value]: operationValue,
         };
+    } else {
+        result.value = expressionValue;
+        // 解析操作符
+        matchOperationList.forEach((item, index) => {
+            // 获取操作的值的索引位置
+            const startIndex = item.index + item.value.length;
+            const endIndex = matchOperationList[index + 1] ? matchOperationList[index + 1].index : expression.length;
+
+            const operationValue = expression.slice(startIndex, endIndex);
+            result[item.value] = operationValue;
+        });
     }
 
-    const result: IExpressOperationDesc = {
-        value: expressionValue,
-    };
-
-    // 解析操作符
-    matchOperationList.forEach((item, index) => {
-        // 获取操作的值的索引位置
-        const startIndex = item.index + item.value.length;
-        const endIndex = matchOperationList[index + 1] ? matchOperationList[index + 1].index : expression.length;
-
-        const operationValue = expression.slice(startIndex, endIndex);
-        result[item.value] = operationValue;
-    });
+    // 如果存在 expression 操作符号，要检查下 expression 对应的值是否是 js 表达式
+    const expressionOperationValue = result[`:${EXPRESSION_OPERATION_MAP.EXPRESSION}:`];
+    if (expressionOperationValue) {
+        if (!isVariableExpressionsString(expressionOperationValue)) {
+            return new Error(`expression 参数的值 "${expressionOperationValue}" 不是一个可执行的 JS 表达式.`);
+        }
+    }
 
     return result;
 };

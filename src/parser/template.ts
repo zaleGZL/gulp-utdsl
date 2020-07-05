@@ -1,5 +1,6 @@
-import { IOperationDesc, IImportPathMap, ICommonObj } from '../typings/index';
-import { OPERATION, INVOKE_TYPE_MAP, COMPARE_TYPE } from '../common/constants';
+import { IOperationDesc, IImportPathMap, ICommonObj, IImportPathItem } from '../typings/index';
+import { OPERATION, INVOKE_TYPE_MAP, COMPARE_TYPE, MOCK_TYPE_MAP } from '../common/constants';
+import _ from 'lodash';
 
 /**
  * 获取 test case 的代码
@@ -22,22 +23,26 @@ export const parseToImportModuleCode = (ioDescList: IOperationDesc[] = []): stri
     const result: string[] = [];
     const importPathMap: IImportPathMap = {};
 
+    // zale TODO: test
+    // console.log('ioDescList', ioDescList);
+
     // 格式化数据，并合并相同的路径变量导入
     ioDescList.forEach((item) => {
-        const { path, variableName, asName } = item;
+        const { path, variableName, asName, moduleAsName } = item;
 
         // 路径或者变量名称有任何一个不存在，则跳过
-        if (!(path && variableName)) {
+        if (!(path && (variableName || moduleAsName))) {
             return;
         }
 
         const newDesc = {
             variableName,
+            moduleAsName,
             asName,
         };
 
         if (!importPathMap[path]) {
-            importPathMap[path] = [newDesc];
+            importPathMap[path] = [newDesc as IImportPathItem];
             return;
         }
 
@@ -48,19 +53,31 @@ export const parseToImportModuleCode = (ioDescList: IOperationDesc[] = []): stri
         if (isExist) {
             return;
         } else {
-            importPathMap[path].push(newDesc);
+            importPathMap[path].push(newDesc as IImportPathItem);
         }
     });
+
+    // zale TODO: test
+    // console.log('importPathMap', importPathMap);
 
     Object.keys(importPathMap).forEach((pathItem) => {
         const variableList = importPathMap[pathItem];
         const pathCode = `"${pathItem}";`;
         let defaultImportCode = '';
+        let moduleNameSpaceImportCode = '';
 
         // 看下是否存在默认导出
         const defaultImport = variableList.find((item) => {
             return item.asName && item.variableName === 'default';
         });
+
+        // 看下是否有命名空间导出
+        const moduleImport = variableList.find((item) => {
+            return !_.isUndefined(item.moduleAsName);
+        });
+        if (moduleImport) {
+            moduleNameSpaceImportCode = `* as ${moduleImport.moduleAsName}`;
+        }
 
         // 存在默认导出
         if (defaultImport) {
@@ -78,7 +95,7 @@ export const parseToImportModuleCode = (ioDescList: IOperationDesc[] = []): stri
             .join(', ');
         const namedImportCode = noImportVariableCode ? `{ ${noImportVariableCode} }` : '';
 
-        result.push(`import ${defaultImportCode} ${namedImportCode} from ${pathCode}`);
+        result.push(`import ${moduleNameSpaceImportCode} ${defaultImportCode} ${namedImportCode} from ${pathCode}`);
     });
 
     return result.join('\n');
@@ -153,6 +170,42 @@ export const parseInvokeTypeCode = (descList: IOperationDesc[], caseConfig: ICom
 };
 
 /**
+ * 解析 mock （类型为 type）的描述对象到代码
+ * @param descList
+ * @param caseConfig
+ */
+export const parseFuncTypeMockCode = (descList: IOperationDesc[], caseConfig: ICommonObj): string => {
+    const result: string[] = [];
+    const mockDesc = descList.find((item) => {
+        return item.operation === OPERATION.MOCKS;
+    });
+
+    // 不存在 mock 语法
+    if (!mockDesc) {
+        return '';
+    }
+
+    // 解析 mock 类型为函数的列表
+    (mockDesc.mockList || [])
+        .filter((item) => {
+            return item.type === MOCK_TYPE_MAP.FUNCTION;
+        })
+        .forEach((mockItem) => {
+            const { targetModuleName, targetName, mockExpression, mockName } = mockItem;
+
+            // 外部导入的 Mock 函数
+            if (mockName) {
+                result.push(`jest.spyOn(${targetModuleName}, '${targetName}').mockImplementation(${mockName})`);
+            } else if (mockExpression) {
+                // 内联的 Mock 表达式
+                result.push(`jest.spyOn(${targetModuleName}, '${targetName}').mockImplementation(${mockExpression})`);
+            }
+        });
+
+    return result.join('\n');
+};
+
+/**
  * 解析操作描述对象到代码
  * @param descList
  */
@@ -173,11 +226,17 @@ export const parseToCode = (descList: IOperationDesc[] = [], caseConfig: ICommon
         )
     );
 
+    // mocks 对象的代码
+    const funMockCode = parseFuncTypeMockCode(descList, caseConfig);
+
     // 函数主体代码
     const invokeTypeCode = parseInvokeTypeCode(descList, caseConfig);
 
+    // 按顺序组合后的代码
+    const mainCode = [funMockCode, invokeTypeCode];
+
     // 合并 testCase 中的代码
-    testCaseCode = getWrapperTestCaseCode([invokeTypeCode].join('\n'), caseConfig.name);
+    testCaseCode = getWrapperTestCaseCode(mainCode.join('\n'), caseConfig.name);
     result.push(testCaseCode);
 
     return result.join('\n');

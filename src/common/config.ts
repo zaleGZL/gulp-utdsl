@@ -26,6 +26,7 @@ export const formatConfigData = (config: ICommonObj, processPath: string): IComm
  * @param documentConfig
  */
 export const combineDefaultTestCaseConfig = (_documentConfig: ICommonObj): ICommonObj | Error => {
+    // TODO: 如果类型不正确，输出提示信息 (这个函数的位置也要看看需不需挪动一下)
     const documentConfig = _.isPlainObject(_documentConfig) ? _documentConfig : {};
     const cases = _.isArray(documentConfig.cases) ? documentConfig.cases : [];
     return {

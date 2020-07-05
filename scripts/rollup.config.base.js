@@ -15,6 +15,7 @@ const resolve = function (...args) {
     return path.resolve(__dirname, ...args);
 };
 
+// TODO: 优化下 rollup 的配置
 export default {
     input: resolve('../src/index.ts'),
     external: projectConfig.useExternal ? externalPackageList : [],
@@ -35,15 +36,18 @@ export default {
             'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
         }),
         projectConfig.bundleNodeModules
-            ? commonjs({
-                  include: 'node_modules/**',
-              })
-            : null,
-        projectConfig.bundleNodeModules
             ? nodeResolve({
                   extensions,
               })
             : null,
+        commonjs({
+            include: 'node_modules/**',
+        }),
+        // projectConfig.bundleNodeModules
+        //     ? commonjs({
+        //           include: 'node_modules/**',
+        //       })
+        //     : null,
         babel({
             exclude: 'node_modules/**',
             extensions,
