@@ -10,6 +10,7 @@ import {
     IExpressOperationDesc,
     IMatchOperationListItem,
     IParse,
+    IExpectListItem,
     IParsePrefixContentParams,
 } from '../typings/index';
 import _ from 'lodash';
@@ -28,6 +29,7 @@ import { parseToCode } from './template';
 import { formatContentDescList } from './data-adapter';
 import { prettierCode } from '../common/index';
 import { parseMocks } from './mocks';
+import { parseExpect } from './expect';
 
 /**
  * 显示具体的错误信息
@@ -54,20 +56,27 @@ export const showErrorMessage = (
  * 解析 IO 参数
  * @param IO
  */
-export const paraseIO = (io: string[] = []): IOperationDesc[] => {
+export const paraseIO = (io: string | string[]): IOperationDesc[] => {
+    let ioList: string[] = [];
     const ioResult: IOperationDesc = {
         operation: OPERATION.IO,
         ioList: [],
     };
     let operationList: IOperationDesc[] = [];
 
+    if (_.isArray(io)) {
+        ioList = io;
+    } else {
+        ioList.push(io);
+    }
+
     // 如果没有 IO 参数（即长度为零，则意味着没有参数）
-    if (io.length === 0) {
+    if (ioList.length === 0) {
         return [ioResult, ...operationList];
     }
 
     // 解析 IO 参数
-    io.forEach((expressionItem) => {
+    ioList.forEach((expressionItem) => {
         const ioItem: IIoListItem = {
             inputs: [],
             output: undefined,
@@ -493,6 +502,14 @@ export const parse = (params: IParse): void => {
             return;
         }
 
+        // 解析 expect 参数
+        try {
+            contentDescList = contentDescList.concat(parseExpect(caseConfig.expect));
+        } catch (error) {
+            showErrorMessage(testDslAbsolutePath, caseConfig, error.message || '', 'expect');
+            return;
+        }
+
         // 格式化测试描述对象（比如对路径进行转换）
         const formattedContentDescList = formatContentDescList({
             contentDescList,
@@ -502,7 +519,7 @@ export const parse = (params: IParse): void => {
         });
 
         // zale TODO: test
-        console.log('formattedContentDescList', JSON.stringify(formattedContentDescList, undefined, 2));
+        // console.log('formattedContentDescList', JSON.stringify(formattedContentDescList, undefined, 2));
 
         // 解析测试文件的描述对象, 生成代码
         const code = parseToCode(formattedContentDescList, caseConfig);

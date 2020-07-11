@@ -38,6 +38,7 @@ export interface IOperationDesc {
     variableName?: string; // 变量名称
     ioList?: IIoListItem[]; // IO 参数列表
     mockList?: IMockListItem[]; // mock 列表
+    expectList?: IExpectListItem[]; // expect 列表
     asName?: string; // 变量导入后需要替换的名称
     value?: string; // 操作所对应的值
     moduleAsName?: string; // 名称空间来引用导入模块的名称
@@ -142,4 +143,13 @@ export interface IParsePrefixContentParams {
     outputTestFilePath: string;
     projectConfig: ICommonObj; // 项目的配置文件
     testDslAbsolutePath: string; // 测试 DSL 文件的绝对路径
+}
+
+export interface IExpectListItem {
+    target: string; // 被 expect 的对象
+    type: string; // expect 的类型
+    expectValue?: string; // 预期的值 （js表达式）
+    expectVariable?: string; // 预期的变量 (变量的形式)
+    nthCallTime?: number; // 第几次调用 (存在 call 操作时)
+    paramPosition?: number; // 参数的位置 (存在 call 操作时)
 }

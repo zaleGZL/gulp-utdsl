@@ -6,6 +6,7 @@ export const OPERATION = {
     MOCKS: 'MOCKS', // mock 数据的信息
     PREFIX_CONTENT: 'PREFIX_CONTENT', // 前置内容
     THIS: 'THIS', // this 内容
+    EXPECT: 'EXPECT', // expect 内容
 };
 
 // UTDSL 语法的关键字
@@ -15,22 +16,8 @@ export const KEY_WORDS = {
     // EXPRESSION: ':expression:', // 直接执行代码
 };
 
-// 操作符号列表
-export const EXPRESSION_OPERATION_NAME_LIST = [
-    'from',
-    'time',
-    'as',
-    'call',
-    'hasProps',
-    'equal',
-    'is',
-    '>',
-    '>=',
-    '<',
-    '<=',
-    'expression',
-    'moduleAs',
-];
+// 子操作符号列表
+export const EXPRESSION_SUB_OPERATION_NAME_LIST = ['from'];
 
 export const EXPRESSION_OPERATION_MAP = {
     EXPRESSION: 'expression',
@@ -73,3 +60,48 @@ export const MOCK_TYPE_MAP = {
     FILE: 'file',
     VARIABLE: 'variable',
 };
+
+// 操作符号列表
+export const EXPRESSION_OPERATION_NAME_LIST = [
+    'from',
+    'time',
+    'as',
+    'call',
+    'hasProps',
+    'equal',
+    'is',
+    '>',
+    '>=',
+    '<',
+    '<=',
+    'expression',
+    'moduleAs',
+];
+
+// expect 支持的类型
+export const EXPECT_TYPE_LIST = ['call', 'hasProps', 'equal', 'is', '>', '>=', '<', '<='];
+
+// expect 类型
+export const EXPECT_TYPE_MAP = {
+    // toBeCalledTimes
+    TIME: 'time',
+    // toHaveBeenCalledWith
+    CALL: 'call',
+    // toHaveProperty
+    HAS_PROPS: 'hasProps',
+    // toEqual
+    EQUAL: 'equal',
+    // ToBe
+    IS: 'is',
+    // toBeGreaterThan
+    THAN: '>',
+    // toBeGreaterThanOrEqual
+    GREATER_THAN: '>=',
+    // toBeLessThan
+    SMALL: '<',
+    // toBeLessThanOrEqual
+    LESS_THAN: '<=',
+};
+
+// expect 分隔符
+export const EXPECT_SEPARATOR = '--->';

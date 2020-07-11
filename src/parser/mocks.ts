@@ -23,6 +23,7 @@ export const parseFunctionTypes = (params: IParseMocksTypesParams): IParseTypesR
 
     // 路径及模块名称解析
     const targetPath = targetOperationDesc[`:${EXPRESSION_OPERATION_MAP.FROM}:`];
+    // zale TODO: 这里看看要怎么处理用户不知道 module_name 的情况
     const moduleName =
         targetOperationDesc[`:${EXPRESSION_OPERATION_MAP.MODULE_AS}:`] || getHashNameFromFilePath(targetPath);
 
