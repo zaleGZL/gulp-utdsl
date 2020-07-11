@@ -27,8 +27,9 @@ export interface IMockListItem {
     targetName?: string; // mock 的目标函数名称
     targetModuleName?: string; // mock 的目标模块导入名称
     mockPath?: string; // mock 的函数路径
-    mockName?: string; // mock 的函数名称
+    mockName?: string; // mock 的函数(或对象)名称
     mockExpression?: string; // mock 的函数对应的表达式
+    needOriginModule?: boolean; // mock 类型为 file 时，可以选择是否要保留源模块的数据（其它的数据可以进行覆盖）
 }
 
 export interface IOperationDesc {
@@ -124,7 +125,7 @@ export interface IMocksItem {
 
 export type TMock = IMocksItem[];
 
-export interface IParseFunctionTypesParams {
+export interface IParseMocksTypesParams {
     targetOperationDesc: IExpressOperationDesc; // 被 mock 的对象的操作描述
     mockOperationDesc: IExpressOperationDesc; // mock 对象的操作描述
     mockItem: IMocksItem; // mock 参数

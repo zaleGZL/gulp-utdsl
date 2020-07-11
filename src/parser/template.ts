@@ -193,12 +193,91 @@ export const parseFuncTypeMockCode = (descList: IOperationDesc[], caseConfig: IC
         .forEach((mockItem) => {
             const { targetModuleName, targetName, mockExpression, mockName } = mockItem;
 
-            // 外部导入的 Mock 函数
-            if (mockName) {
-                result.push(`jest.spyOn(${targetModuleName}, '${targetName}').mockImplementation(${mockName})`);
-            } else if (mockExpression) {
+            if (mockExpression) {
                 // 内联的 Mock 表达式
                 result.push(`jest.spyOn(${targetModuleName}, '${targetName}').mockImplementation(${mockExpression})`);
+            } else if (mockName) {
+                // 外部导入的 Mock 函数
+                result.push(`jest.spyOn(${targetModuleName}, '${targetName}').mockImplementation(${mockName})`);
+            }
+        });
+
+    return result.join('\n');
+};
+
+/**
+ * 解析 mock （类型为 type）的描述对象到代码
+ * @param descList
+ * @param caseConfig
+ */
+export const parseFileTypeMockCode = (descList: IOperationDesc[], caseConfig: ICommonObj): string => {
+    const result: string[] = [];
+    const mockDesc = descList.find((item) => {
+        return item.operation === OPERATION.MOCKS;
+    });
+
+    // 不存在 mock 语法
+    if (!mockDesc) {
+        return '';
+    }
+
+    // 解析 mock 类型为文件
+    (mockDesc.mockList || [])
+        .filter((item) => {
+            return item.type === MOCK_TYPE_MAP.FILE;
+        })
+        .forEach((mockItem) => {
+            const { targetPath, needOriginModule, mockName, mockExpression } = mockItem;
+            let mockModuleContent = '{}';
+
+            if (mockExpression) {
+                mockModuleContent = mockExpression;
+            } else {
+                mockModuleContent = mockName || mockModuleContent;
+            }
+
+            result.push(`
+                jest.mock('${targetPath}', () => {
+                    return {
+                        ${needOriginModule ? `...(jest.requireActual('${targetPath}')),` : ''}
+                        ...${mockModuleContent},
+                    }
+                })
+            `);
+        });
+
+    return result.join('\n');
+};
+
+/**
+ * 解析 mock （类型为 variable）的描述对象到代码
+ * @param descList
+ * @param caseConfig
+ */
+export const parseVariableTypeMockCode = (descList: IOperationDesc[], caseConfig: ICommonObj): string => {
+    const result: string[] = [];
+    const mockDesc = descList.find((item) => {
+        return item.operation === OPERATION.MOCKS;
+    });
+
+    // 不存在 mock 语法
+    if (!mockDesc) {
+        return '';
+    }
+
+    // 解析 mock 类型为函数的列表
+    (mockDesc.mockList || [])
+        .filter((item) => {
+            return item.type === MOCK_TYPE_MAP.VARIABLE;
+        })
+        .forEach((mockItem) => {
+            const { targetName, mockName, mockExpression } = mockItem;
+
+            if (mockExpression) {
+                // 内联的 Mock 表达式
+                result.push(`${targetName} = jest.fn(${mockExpression})`);
+            } else if (mockName) {
+                result.push(`${targetName} = jest.fn(${mockName})`);
             }
         });
 
@@ -226,17 +305,25 @@ export const parseToCode = (descList: IOperationDesc[] = [], caseConfig: ICommon
         )
     );
 
-    // mocks 对象的代码
+    // mocks 对象的代码 (type 为 function)
     const funMockCode = parseFuncTypeMockCode(descList, caseConfig);
+
+    // mocks 对象的代码 (type 为 file)
+    const fileMockCode = parseFileTypeMockCode(descList, caseConfig);
+
+    // mocks 对象的代码 (type 为 variable)
+    const variableMockCode = parseVariableTypeMockCode(descList, caseConfig);
 
     // 函数主体代码
     const invokeTypeCode = parseInvokeTypeCode(descList, caseConfig);
 
     // 按顺序组合后的代码
-    const mainCode = [funMockCode, invokeTypeCode];
+    const mainCode = [variableMockCode, funMockCode, invokeTypeCode];
 
     // 合并 testCase 中的代码
     testCaseCode = getWrapperTestCaseCode(mainCode.join('\n'), caseConfig.name);
+
+    result.push(fileMockCode);
     result.push(testCaseCode);
 
     return result.join('\n');

@@ -4,7 +4,7 @@
 import {
     IMocksItem,
     IOperationDesc,
-    IParseFunctionTypesParams,
+    IParseMocksTypesParams,
     IExpressOperationDesc,
     IParseTypesReturn,
     IMockListItem,
@@ -18,7 +18,7 @@ import { getHashNameFromFilePath } from '../common/parser';
  * 解析 type 为 function 的 mock 语法
  * @param params
  */
-export const parseFunctionTypes = (params: IParseFunctionTypesParams): IParseTypesReturn => {
+export const parseFunctionTypes = (params: IParseMocksTypesParams): IParseTypesReturn => {
     const { targetOperationDesc, mockOperationDesc, mockItem } = params;
 
     // 路径及模块名称解析
@@ -59,18 +59,86 @@ export const parseFunctionTypes = (params: IParseFunctionTypesParams): IParseTyp
 };
 
 /**
+ * 解析 type 为 file 的 mock 语法
+ * @param params
+ */
+export const parseFileTypes = (params: IParseMocksTypesParams): IParseTypesReturn => {
+    const { targetOperationDesc, mockOperationDesc, mockItem } = params;
+    const operationList: IOperationDesc[] = [];
+
+    // 路径及模块名称解析
+    const targetPath = targetOperationDesc[`:${EXPRESSION_OPERATION_MAP.FROM}:`];
+    const asName = (mockOperationDesc.value || '').startsWith('mock')
+        ? mockOperationDesc.value
+        : `mock_${mockOperationDesc.value || ''}`;
+
+    const mockDesc = {
+        type: MOCK_TYPE_MAP.FILE,
+        targetPath,
+        needOriginModule: Boolean(mockItem.needOriginModule),
+        mockPath: mockOperationDesc[`:${EXPRESSION_OPERATION_MAP.FROM}:`],
+        mockName: mockOperationDesc.value && asName ? asName : undefined,
+        mockExpression: mockOperationDesc[`:${EXPRESSION_OPERATION_MAP.EXPRESSION}:`],
+    };
+
+    // 如果 mock 的文件是从外部导入的， 不是内联表达式
+    if (mockDesc.mockPath) {
+        operationList.push({
+            operation: OPERATION.IMPORT,
+            path: mockDesc.mockPath,
+            variableName: mockOperationDesc.value,
+            asName: mockDesc.mockName ? asName : undefined,
+        });
+    }
+
+    return {
+        mockDesc: mockDesc,
+        operationList,
+    };
+};
+
+/**
+ * 解析 type 为 variable 的 mock 语法
+ * @param params
+ */
+export const parseVariableTypes = (params: IParseMocksTypesParams): IParseTypesReturn => {
+    const { targetOperationDesc, mockOperationDesc, mockItem } = params;
+    const operationList = [];
+
+    // 路径及模块名称解析
+    const mockDesc = {
+        type: MOCK_TYPE_MAP.VARIABLE,
+        targetName: targetOperationDesc.value,
+        mockPath: mockOperationDesc[`:${EXPRESSION_OPERATION_MAP.FROM}:`],
+        mockName: mockOperationDesc.value,
+        mockExpression: mockOperationDesc[`:${EXPRESSION_OPERATION_MAP.EXPRESSION}:`],
+    };
+
+    // 如果 mock 的文件是从外部导入的， 不是内联表达式
+    if (mockDesc.mockPath) {
+        operationList.push({
+            operation: OPERATION.IMPORT,
+            path: mockDesc.mockPath,
+            variableName: mockDesc.mockName,
+        });
+    }
+
+    return {
+        mockDesc,
+        operationList,
+    };
+};
+
+/**
  * 解析 mocks 参数
  * @param mocks
  */
 export const parseMocks = (mocks: IMocksItem[]): IOperationDesc[] => {
-    // zale TODO: test
-    // console.log('mocks', mocks);
-
     const mockOperation: IOperationDesc = {
         operation: OPERATION.MOCKS,
         mockList: [],
     };
-    let extraOperationList: IOperationDesc[] = [];
+    const extraOperationList: IOperationDesc[] = [];
 
     // 没有 Mock 数据
     if (mocks.length === 0) {
@@ -115,11 +183,31 @@ export const parseMocks = (mocks: IMocksItem[]): IOperationDesc[] => {
                     mockItem,
                 });
                 (mockOperation.mockList as IMockListItem[]).push(mockDesc);
-                extraOperationList = operationList;
+                extraOperationList.push(...operationList);
                 break;
             }
-            // TODO: mock 类型为 file
-            // TODO: mock 类型为 variable
+            // mock 类型为 file
+            case MOCK_TYPE_MAP.FILE: {
+                const { mockDesc, operationList } = parseFileTypes({
+                    targetOperationDesc: targetOperationDesc as IExpressOperationDesc,
+                    mockOperationDesc: mockOperationDesc as IExpressOperationDesc,
+                    mockItem,
+                });
+                (mockOperation.mockList as IMockListItem[]).push(mockDesc);
+                extraOperationList.push(...operationList);
+                break;
+            }
+            // mock 类型为 variable
+            case MOCK_TYPE_MAP.VARIABLE: {
+                const { mockDesc, operationList } = parseVariableTypes({
+                    targetOperationDesc: targetOperationDesc as IExpressOperationDesc,
+                    mockOperationDesc: mockOperationDesc as IExpressOperationDesc,
+                    mockItem,
+                });
+                (mockOperation.mockList as IMockListItem[]).push(mockDesc);
+                extraOperationList.push(...operationList);
+                break;
+            }
         }
     });
 
