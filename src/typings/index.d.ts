@@ -135,3 +135,10 @@ export interface IParseTypesReturn {
     mockDesc: IMockListItem; // mock 描述
     operationList: IOperationDesc[]; // 其它内容描述对象列表
 }
+
+export interface IParsePrefixContentParams {
+    prefixContent: string | string[]; // 测试用例前缀内容
+    outputTestFilePath: string;
+    projectConfig: ICommonObj; // 项目的配置文件
+    testDslAbsolutePath: string; // 测试 DSL 文件的绝对路径
+}

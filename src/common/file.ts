@@ -38,7 +38,7 @@ export const getOutputTestFilePath = (params: IGetFileImportPath): string => {
 /**
  * 获取导入的文件路径
  */
-export const getImportFilePath = (params: IGetImportFilePath): string => {
+export const getImportFilePath = (params: IGetImportFilePath, isRelativeTestFile = true): string => {
     const { filePath, testFileAbsolutePath, testDslAbsolutePath, projectConfig } = params;
 
     // 先获取要 import 的文件的绝对路径
@@ -54,7 +54,11 @@ export const getImportFilePath = (params: IGetImportFilePath): string => {
         absoluteFilePath = path.resolve(projectConfig.filePathAbsolutePathPrefix, filePath);
     }
 
-    return path.relative(path.dirname(testFileAbsolutePath), absoluteFilePath);
+    if (isRelativeTestFile) {
+        return path.relative(path.dirname(testFileAbsolutePath), absoluteFilePath);
+    } else {
+        return absoluteFilePath;
+    }
 };
 
 // /**

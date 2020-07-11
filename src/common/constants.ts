@@ -4,6 +4,7 @@ export const OPERATION = {
     INVOKE_TYPE: 'INVOKE_TYPE', // 调用方式
     META: 'META', // 元信息
     MOCKS: 'MOCKS', // mock 数据的信息
+    PREFIX_CONTENT: 'PREFIX_CONTENT', // 前置内容
 };
 
 // UTDSL 语法的关键字

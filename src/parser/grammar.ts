@@ -10,8 +10,10 @@ import {
     IExpressOperationDesc,
     IMatchOperationListItem,
     IParse,
+    IParsePrefixContentParams,
 } from '../typings/index';
 import _ from 'lodash';
+import path from 'path';
 import { getOutputTestFilePath, getImportFilePath } from '../common/file';
 import {
     OPERATION,
@@ -178,7 +180,7 @@ export const parseFuncParams = (dataDesc: string): TParseFuncParamsResult => {
 };
 
 /**
- *
+ * 解析调用方式数据
  * @param invokeType 调用方式
  */
 export const parseInvokeType = (invokeType: string): IOperationDesc[] => {
@@ -198,11 +200,81 @@ export const parseInvokeType = (invokeType: string): IOperationDesc[] => {
 };
 
 /**
+ * 解析前置内容语法
+ * @param params
+ */
+export const parsePrefixContent = (params: IParsePrefixContentParams): IOperationDesc[] => {
+    const { prefixContent, outputTestFilePath, projectConfig, testDslAbsolutePath } = params;
+
+    let content: string[] = [];
+    const result: string[] = [];
+    // 根路径
+    const rootDir = path.relative(path.dirname(outputTestFilePath), projectConfig.filePathAbsolutePathPrefix);
+
+    if (_.isArray(prefixContent)) {
+        content = prefixContent;
+    } else if (prefixContent) {
+        content.push(prefixContent);
+    }
+
+    if (content.length === 0) {
+        return [];
+    }
+
+    content.forEach((item, index) => {
+        // 检查参数是否合法
+        if (!_.isString(item)) {
+            throw new Error(`参数 prefixContent 中的第 ${index} 项的类型为 ${typeof item}, 目前只支持字符串.`);
+        }
+
+        // 操作描述
+        const operationDesc = parserExpressionOperationDesc(item);
+
+        if (operationDesc instanceof Error) {
+            throw operationDesc;
+        }
+
+        // 前缀模板文件路径
+        const contentPath = getImportFilePath(
+            {
+                filePath: operationDesc[`:${EXPRESSION_OPERATION_MAP.FROM}:`],
+                testFileAbsolutePath: '',
+                testDslAbsolutePath,
+                projectConfig,
+            },
+            false
+        );
+
+        // 检查下模板文件是否存在
+        const isExistContentFile = fs.existsSync(contentPath);
+
+        if (!isExistContentFile) {
+            throw new Error(`参数 prefixContent 所指的文件路径 ${contentPath} 不存在.`);
+        }
+
+        const formattedContent = String(fs.readFileSync(contentPath)).replace(/<rootDir>/g, rootDir);
+
+        result.push(formattedContent);
+    });
+
+    return [
+        {
+            operation: OPERATION.PREFIX_CONTENT,
+            value: result.join('\n'),
+        },
+    ];
+};
+
+/**
  * 解析主函数
  * @param params
  */
 export const parse = (params: IParse): void => {
     const { testDslAbsolutePath, projectConfig, testCaseConfig, prettierConfig } = params;
+
+    // zale TODO: test
+    // console.log('testDslAbsolutePath', testDslAbsolutePath);
+    // console.log('projectConfig', projectConfig);
 
     // 公共必填参数检查
     if (!_.isString(testCaseConfig.path)) {
@@ -221,6 +293,8 @@ export const parse = (params: IParse): void => {
             projectConfig,
             testCaseConfig: caseConfig,
         });
+
+        // console.log('outputTestFilePath', outputTestFilePath);
 
         // 导入待测试的函数模块
         contentDescList.push({
@@ -257,13 +331,34 @@ export const parse = (params: IParse): void => {
             return;
         }
 
-        // 解析 mock 对象 (mock)
+        // 解析 mock 数据 (mock)
         try {
             contentDescList = contentDescList.concat(parseMocks(caseConfig.mocks));
         } catch (error) {
             consoleOutput(
                 [
                     `测试 DSL 文件 ${testDslAbsolutePath} 的 ${caseConfig.name} 的 mocks 参数解析错误!`,
+                    `详细信息：`,
+                    error.message || '',
+                ].join('\n')
+            );
+            return;
+        }
+
+        // 解析 prefixContent 参数
+        try {
+            contentDescList = contentDescList.concat(
+                parsePrefixContent({
+                    prefixContent: caseConfig.prefixContent,
+                    outputTestFilePath,
+                    projectConfig,
+                    testDslAbsolutePath,
+                })
+            );
+        } catch (error) {
+            consoleOutput(
+                [
+                    `测试 DSL 文件 ${testDslAbsolutePath} 的 ${caseConfig.name} 的 prefixContent 参数解析错误!`,
                     `详细信息：`,
                     error.message || '',
                 ].join('\n')
@@ -301,6 +396,7 @@ export const parse = (params: IParse): void => {
  */
 export const parserExpressionOperationDesc = (expression = ''): IExpressOperationDesc | Error => {
     // 获取表达式的值
+    expression = expression.trim();
     const firstOperationIndex = expression.indexOf(':');
     const expressionValue = expression.slice(0, firstOperationIndex);
 

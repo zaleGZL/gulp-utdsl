@@ -285,6 +285,23 @@ export const parseVariableTypeMockCode = (descList: IOperationDesc[], caseConfig
 };
 
 /**
+ * 解析前缀内容代码
+ * @param descList
+ * @param caseConfig
+ */
+export const parsePrefixContentCode = (descList: IOperationDesc[], caseConfig: ICommonObj): string => {
+    const desc = descList.find((item) => {
+        return item.operation === OPERATION.PREFIX_CONTENT;
+    });
+
+    if (desc) {
+        return desc.value || '';
+    } else {
+        return '';
+    }
+};
+
+/**
  * 解析操作描述对象到代码
  * @param descList
  */
@@ -304,6 +321,9 @@ export const parseToCode = (descList: IOperationDesc[] = [], caseConfig: ICommon
             })
         )
     );
+
+    // prefixContent 的代码
+    result.push(parsePrefixContentCode(descList, caseConfig));
 
     // mocks 对象的代码 (type 为 function)
     const funMockCode = parseFuncTypeMockCode(descList, caseConfig);
