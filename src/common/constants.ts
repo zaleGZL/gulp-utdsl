@@ -5,6 +5,7 @@ export const OPERATION = {
     META: 'META', // 元信息
     MOCKS: 'MOCKS', // mock 数据的信息
     PREFIX_CONTENT: 'PREFIX_CONTENT', // 前置内容
+    THIS: 'THIS', // this 内容
 };
 
 // UTDSL 语法的关键字

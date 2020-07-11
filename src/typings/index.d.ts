@@ -41,6 +41,7 @@ export interface IOperationDesc {
     asName?: string; // 变量导入后需要替换的名称
     value?: string; // 操作所对应的值
     moduleAsName?: string; // 名称空间来引用导入模块的名称
+    expression?: string; // JS 表达式的内容
 }
 
 export interface IParamsDesc {

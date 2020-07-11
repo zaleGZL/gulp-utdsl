@@ -30,6 +30,27 @@ import { prettierCode } from '../common/index';
 import { parseMocks } from './mocks';
 
 /**
+ * 显示具体的错误信息
+ * @param testDslAbsolutePath
+ * @param caseConfig
+ * @param error
+ */
+export const showErrorMessage = (
+    testDslAbsolutePath = '',
+    caseConfig: ICommonObj,
+    errorMessage = '',
+    paramName = ''
+): void => {
+    consoleOutput(
+        [
+            `测试 DSL 文件 ${testDslAbsolutePath} 的 ${caseConfig.name} 的 ${paramName} 参数解析错误!`,
+            `详细信息：`,
+            errorMessage,
+        ].join('\n')
+    );
+};
+
+/**
  * 解析 IO 参数
  * @param IO
  */
@@ -266,6 +287,33 @@ export const parsePrefixContent = (params: IParsePrefixContentParams): IOperatio
 };
 
 /**
+ * 解析 this 参数
+ * @param thisContent
+ */
+export const parserThis = (thisContent: string): IOperationDesc[] => {
+    // 如果存在参数，但是类型不正确
+    if (thisContent && !_.isString(thisContent)) {
+        throw new Error(`参数 this 只支持字符串, 详细语法见文档.`);
+    }
+
+    // 解析操作描述
+    const operationDesc = parserExpressionOperationDesc(thisContent);
+
+    if (operationDesc instanceof Error) {
+        throw operationDesc;
+    }
+
+    return [
+        {
+            operation: OPERATION.THIS,
+            variableName: operationDesc.value,
+            path: operationDesc[`:${EXPRESSION_OPERATION_MAP.FROM}:`],
+            expression: operationDesc[`:${EXPRESSION_OPERATION_MAP.EXPRESSION}:`],
+        },
+    ];
+};
+
+/**
  * 解析主函数
  * @param params
  */
@@ -307,13 +355,7 @@ export const parse = (params: IParse): void => {
         try {
             contentDescList = contentDescList.concat(paraseIO(caseConfig.io));
         } catch (error) {
-            consoleOutput(
-                [
-                    `测试 DSL 文件 ${testDslAbsolutePath} 的 ${caseConfig.name} 的 io 参数解析错误!`,
-                    `详细信息：`,
-                    error.message || '',
-                ].join('\n')
-            );
+            showErrorMessage(testDslAbsolutePath, caseConfig, error.message || '', 'io');
             return;
         }
 
@@ -321,13 +363,7 @@ export const parse = (params: IParse): void => {
         try {
             contentDescList = contentDescList.concat(parseInvokeType(caseConfig.invokeType));
         } catch (error) {
-            consoleOutput(
-                [
-                    `测试 DSL 文件 ${testDslAbsolutePath} 的 ${caseConfig.name} 的 invokeType 参数解析错误!`,
-                    `详细信息：`,
-                    error.message || '',
-                ].join('\n')
-            );
+            showErrorMessage(testDslAbsolutePath, caseConfig, error.message || '', 'invokeType');
             return;
         }
 
@@ -335,13 +371,7 @@ export const parse = (params: IParse): void => {
         try {
             contentDescList = contentDescList.concat(parseMocks(caseConfig.mocks));
         } catch (error) {
-            consoleOutput(
-                [
-                    `测试 DSL 文件 ${testDslAbsolutePath} 的 ${caseConfig.name} 的 mocks 参数解析错误!`,
-                    `详细信息：`,
-                    error.message || '',
-                ].join('\n')
-            );
+            showErrorMessage(testDslAbsolutePath, caseConfig, error.message || '', 'mocks');
             return;
         }
 
@@ -356,13 +386,15 @@ export const parse = (params: IParse): void => {
                 })
             );
         } catch (error) {
-            consoleOutput(
-                [
-                    `测试 DSL 文件 ${testDslAbsolutePath} 的 ${caseConfig.name} 的 prefixContent 参数解析错误!`,
-                    `详细信息：`,
-                    error.message || '',
-                ].join('\n')
-            );
+            showErrorMessage(testDslAbsolutePath, caseConfig, error.message || '', 'prefixContent');
+            return;
+        }
+
+        // 解析 this 参数
+        try {
+            contentDescList = contentDescList.concat(parserThis(caseConfig.this));
+        } catch (error) {
+            showErrorMessage(testDslAbsolutePath, caseConfig, error.message || '', 'this');
             return;
         }
 
