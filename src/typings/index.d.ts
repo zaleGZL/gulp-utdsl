@@ -32,6 +32,12 @@ export interface IMockListItem {
     needOriginModule?: boolean; // mock 类型为 file 时，可以选择是否要保留源模块的数据（其它的数据可以进行覆盖）
 }
 
+export interface IInvokeType {
+    type: string; // 调用的类型 (比如, default, promise)
+    promsieResult?: string; // resolve 或者是 reject
+    custom?: string; // 自定义调用的方式
+}
+
 export interface IOperationDesc {
     operation: string; // 操作类型
     path?: string; // 路径
@@ -43,6 +49,7 @@ export interface IOperationDesc {
     value?: string; // 操作所对应的值
     moduleAsName?: string; // 名称空间来引用导入模块的名称
     expression?: string; // JS 表达式的内容
+    invokeType?: IInvokeType; // 调用类型
 }
 
 export interface IParamsDesc {
@@ -148,8 +155,6 @@ export interface IParsePrefixContentParams {
 export interface IExpectListItem {
     target: string; // 被 expect 的对象
     type: string; // expect 的类型
-    expectValue?: string; // 预期的值 （js表达式）
-    expectVariable?: string; // 预期的变量 (变量的形式)
-    nthCallTime?: number; // 第几次调用 (存在 call 操作时)
-    paramPosition?: number; // 参数的位置 (存在 call 操作时)
+    expectParamsValue?: IParamsDesc[]; // 预期值
+    callTimeAndPosition?: string; // 调用次数和位置
 }

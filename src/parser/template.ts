@@ -1,5 +1,13 @@
 import { IOperationDesc, IImportPathMap, ICommonObj, IImportPathItem } from '../typings/index';
-import { OPERATION, INVOKE_TYPE_MAP, COMPARE_TYPE, MOCK_TYPE_MAP } from '../common/constants';
+import {
+    OPERATION,
+    INVOKE_TYPE_MAP,
+    COMPARE_TYPE,
+    MOCK_TYPE_MAP,
+    INVOKE_TYPE_VALUE_MAP,
+    INVOKE_TYPE_PROPERTY_MAP,
+    INVOKE_PLACEHOLDER,
+} from '../common/constants';
 import _ from 'lodash';
 
 /**
@@ -9,7 +17,7 @@ import _ from 'lodash';
  */
 export const getWrapperTestCaseCode = (innerCode: string, title: string): string => {
     return `
-        test('${title}', () => {
+        test('${title}', async () => {
             ${innerCode}
         })
     `;
@@ -119,25 +127,31 @@ export const getParamsVariable = (dataParam: ICommonObj): any => {
  * 解析 invokeType 为 default 时的函数调用 expect 代码
  * @param descList
  */
-export const parseInvokeTypeCode = (descList: IOperationDesc[], caseConfig: ICommonObj): string => {
+export const parseInvokeCode = (descList: IOperationDesc[], caseConfig: ICommonObj, expectCode = ''): string => {
     const result: string[] = [];
 
     const invokeTypeDesc = descList.find((item) => {
         return item.operation === OPERATION.INVOKE_TYPE;
     });
+    const ioDesc = descList.find((item) => {
+        return item.operation === OPERATION.IO;
+    });
+    const thisDesc = descList.find((item) => {
+        return item.operation === OPERATION.THIS;
+    });
+
+    // zale TODO: test
+    // console.log('ioDesc.ioList', JSON.stringify(ioDesc.ioList, undefined, 2));
 
     // 不存在 invokeType
-    if (!invokeTypeDesc) {
+    if (!invokeTypeDesc || !invokeTypeDesc.invokeType) {
         return '';
     }
 
-    switch (invokeTypeDesc.value) {
+    const { invokeType } = invokeTypeDesc;
+    switch (invokeType.type) {
         // 同步调用函数，判断输出的参数与预期的相符
-        case INVOKE_TYPE_MAP.DEFAULT: {
-            const ioDesc = descList.find((item) => {
-                return item.operation === OPERATION.IO;
-            });
-
+        case INVOKE_TYPE_VALUE_MAP.DEFAULT: {
             if (!ioDesc || ioDesc.ioList?.length === 0) {
                 return '';
             }
@@ -156,12 +170,63 @@ export const parseInvokeTypeCode = (descList: IOperationDesc[], caseConfig: ICom
 
                 // 存在比较函数，根据对应的参数调用函数，并判断对应的输出是否符合预期
                 if (compareTypeName) {
-                    result.push(
-                        `expect(${caseConfig.target}(${inputs.join(',')})).${compareTypeName}(${outputVariable})`
-                    );
+                    let callCode = '';
+                    if (thisDesc && thisDesc.value) {
+                        callCode = `.call(${thisDesc.value} ${inputs.length > 0 ? ',' : ''} ${inputs.join(',')})`;
+                    } else {
+                        callCode = `(${inputs.join(',')})`;
+                    }
+                    result.push(`expect(${caseConfig.target}${callCode}).${compareTypeName}(${outputVariable})`);
                 }
             });
 
+            // 同步调用，直接在下一行插入 expect 的代码
+            result.push(expectCode);
+
+            break;
+        }
+        // promise 的形式调用
+        case INVOKE_TYPE_VALUE_MAP.PROMISE: {
+            // 默认在 resolve 进行预期行为的判断
+            let promiseThenCode = `.then((res) => {
+                ${expectCode}
+            }, (error) => {
+                expect(true).toBe(false);
+            });
+            `;
+            // 如果定义为 reject, 则在 reject 里面进行判断
+            if (invokeType.promsieResult === INVOKE_TYPE_PROPERTY_MAP.REJECT) {
+                promiseThenCode = `.then((res) => {
+                    expect(true).toBe(false);
+                }, (error) => {
+                    ${expectCode}
+                });
+                `;
+            }
+
+            // 解析函数调用的参数
+            const inputs = _.get(ioDesc, 'ioList.0.inputs', [])
+                .map((inputItem: ICommonObj) => {
+                    return getParamsVariable(inputItem);
+                })
+                .filter((item: any) => !!item);
+
+            let callCode = '';
+            if (thisDesc && thisDesc.value) {
+                callCode = `${caseConfig.target}.call(${thisDesc.value} ${inputs.length > 0 ? ',' : ''} ${inputs.join(
+                    ','
+                )})`;
+            } else {
+                callCode = `${caseConfig.target}(${inputs.join(',')})`;
+            }
+
+            // 调用的代码
+            let invokeCode = callCode;
+            if (invokeType.custom) {
+                invokeCode = invokeType.custom.replace(INVOKE_PLACEHOLDER, invokeCode);
+            }
+
+            result.push(`return ${invokeCode}${promiseThenCode}`);
             break;
         }
     }
@@ -302,6 +367,15 @@ export const parsePrefixContentCode = (descList: IOperationDesc[], caseConfig: I
 };
 
 /**
+ * 解析 expect 的代码
+ * @param descList
+ * @param caseConfig
+ */
+export const parseExpectCode = (descList: IOperationDesc[], caseConfig: ICommonObj): string => {
+    return '';
+};
+
+/**
  * 解析操作描述对象到代码
  * @param descList
  */
@@ -334,11 +408,17 @@ export const parseToCode = (descList: IOperationDesc[] = [], caseConfig: ICommon
     // mocks 对象的代码 (type 为 variable)
     const variableMockCode = parseVariableTypeMockCode(descList, caseConfig);
 
+    // expect 的代码
+    const expectCode = parseExpectCode(descList, caseConfig);
+
     // 函数主体代码
-    const invokeTypeCode = parseInvokeTypeCode(descList, caseConfig);
+    const invokeCode = parseInvokeCode(descList, caseConfig, expectCode);
+
+    // zale TODO: test
+    // console.log('expectCode', expectCode);
 
     // 按顺序组合后的代码
-    const mainCode = [variableMockCode, funMockCode, invokeTypeCode];
+    const mainCode = [variableMockCode, funMockCode, invokeCode];
 
     // 合并 testCase 中的代码
     testCaseCode = getWrapperTestCaseCode(mainCode.join('\n'), caseConfig.name);

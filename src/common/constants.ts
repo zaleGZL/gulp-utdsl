@@ -103,5 +103,22 @@ export const EXPECT_TYPE_MAP = {
     LESS_THAN: '<=',
 };
 
+// 调用方式的属性
+export const INVOKE_TYPE_PROPERTY_MAP = {
+    RESOLVE: 'resolve',
+    REJECT: 'reject',
+    CUSTOM: 'custom',
+};
+
+export const INVOKE_TYPE_VALUE_MAP = {
+    DEFAULT: 'default',
+    PROMISE: 'promise',
+    // RENDER: 'render',
+    // ASYNC: 'async',
+};
+
 // expect 分隔符
 export const EXPECT_SEPARATOR = '--->';
+
+// 调用替换符号
+export const INVOKE_PLACEHOLDER = '<invoke>';

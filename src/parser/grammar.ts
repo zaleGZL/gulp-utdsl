@@ -1,35 +1,31 @@
 import fs from 'fs-extra';
-import { consoleOutput, isVariableExpressionsString, isRepeat } from './../common/utils';
+import { consoleOutput } from './../common/utils';
 import {
     ICommonObj,
     IOperationDesc,
-    IParamsDesc,
-    IDataParamsDesc,
     IIoListItem,
-    TParseFuncParamsResult,
-    IExpressOperationDesc,
-    IMatchOperationListItem,
     IParse,
-    IExpectListItem,
     IParsePrefixContentParams,
+    IInvokeType,
 } from '../typings/index';
 import _ from 'lodash';
 import path from 'path';
 import { getOutputTestFilePath, getImportFilePath } from '../common/file';
 import {
     OPERATION,
-    KEY_WORDS,
-    EXPRESSION_OPERATION_NAME_LIST,
     FUNCTION_PARAMS_COMPARE_OPERATION,
     FUNCTION_PARAMS_COMPARE_OPERATION_MAP,
-    INVOKE_TYPE_LIST,
     EXPRESSION_OPERATION_MAP,
+    INVOKE_TYPE_PROPERTY_MAP,
+    INVOKE_TYPE_VALUE_MAP,
+    INVOKE_PLACEHOLDER,
 } from '../common/constants';
 import { parseToCode } from './template';
 import { formatContentDescList } from './data-adapter';
 import { prettierCode } from '../common/index';
 import { parseMocks } from './mocks';
 import { parseExpect } from './expect';
+import { parseFuncParams, parserExpressionOperationDesc } from './common';
 
 /**
  * 显示具体的错误信息
@@ -97,6 +93,8 @@ export const paraseIO = (io: string | string[]): IOperationDesc[] => {
         } else if (expressionItem.includes(FUNCTION_PARAMS_COMPARE_OPERATION.IS)) {
             compareOperation = FUNCTION_PARAMS_COMPARE_OPERATION_MAP.IS;
             inputAndOutput = expressionItem.split(FUNCTION_PARAMS_COMPARE_OPERATION.IS);
+        } else {
+            inputAndOutput = [expressionItem];
         }
 
         if (inputAndOutput.length > 2) {
@@ -139,91 +137,52 @@ export const paraseIO = (io: string | string[]): IOperationDesc[] => {
 };
 
 /**
- * 解析数据描述语句
- * @param dataDesc 数据描述语句 如："({name: "zale"}, data:from:./data/data.js)"
- */
-export const parseFuncParams = (dataDesc: string): TParseFuncParamsResult => {
-    const result: TParseFuncParamsResult = {
-        ioDescList: [],
-        operationList: [],
-    };
-    let lastRightSeparatorIndex = 0; // 最后一个正确的参数分隔符索引
-
-    // 检查正确性
-    if (!(dataDesc.startsWith('(') && dataDesc.endsWith(')'))) {
-        return new Error(`参数语句： "${dataDesc}" 语法不正确，请修改。`);
-    }
-
-    for (let i = 1; i < dataDesc.length; i++) {
-        if (dataDesc[i] !== ',' && i !== dataDesc.length - 1) {
-            continue;
-        }
-
-        const expression = dataDesc.slice(lastRightSeparatorIndex + 1, i).trim();
-
-        // 看下自从上一个分隔符到这里，是否是合法的 JS 表达式
-        if (isVariableExpressionsString(expression)) {
-            result.ioDescList.push({
-                isJsVariable: true,
-                expression,
-            });
-            lastRightSeparatorIndex = i;
-            continue;
-        }
-
-        // 如果不是表达式，看看是否是外部数据导入的语法
-        const dataParamsDesc = paraseDataParamsExpression(expression);
-        if (dataParamsDesc.isValidate) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { isValidate: _isValidate, asName, ...others } = dataParamsDesc;
-            result.ioDescList.push({
-                isExternalData: true,
-                variableName: dataParamsDesc.variableName,
-                path: dataParamsDesc.path,
-                asName,
-            });
-            result.operationList.push({
-                operation: OPERATION.IMPORT,
-                asName,
-                ...others,
-            });
-            lastRightSeparatorIndex = i;
-            continue;
-        }
-    }
-
-    // 有解析到参数
-    if (result.ioDescList.length > 0) {
-        if (lastRightSeparatorIndex === dataDesc.length - 1) {
-            // 所有参数正确解析
-            return result;
-        } else {
-            return new Error(`参数表达式 ${dataDesc} 存在无法解析的语法.`);
-        }
-    } else {
-        if (dataDesc.slice(1, -1).trim().length > 0) {
-            return new Error(`参数表达式 ${dataDesc} 存在无法解析的语法.`);
-        } else {
-            return result;
-        }
-    }
-};
-
-/**
  * 解析调用方式数据
  * @param invokeType 调用方式
  */
 export const parseInvokeType = (invokeType: string): IOperationDesc[] => {
     const result: IOperationDesc[] = [];
 
-    // 检查下 invoke_type 是否合法
-    if (!INVOKE_TYPE_LIST.includes(invokeType)) {
-        throw new Error(`暂不支持所输入的 invokeType 参数 ${invokeType}.`);
+    if (!_.isString(invokeType)) {
+        throw new Error(`输入的 invokeType 参数需要为字符串.`);
+    }
+
+    // 解析表达式
+    const operationDesc = parserExpressionOperationDesc(invokeType.trim(), Object.values(INVOKE_TYPE_PROPERTY_MAP));
+
+    if (operationDesc instanceof Error) {
+        throw operationDesc;
+    }
+
+    // 检查下 value 是否被支持
+    if (!Object.values(INVOKE_TYPE_VALUE_MAP).includes(operationDesc.value)) {
+        throw new Error(
+            `暂不支持输入的 invokeType "${operationDesc.value}", 目前仅支持 ${Object.values(INVOKE_TYPE_VALUE_MAP).join(
+                ','
+            )}`
+        );
+    }
+
+    const customValue = operationDesc[`:${INVOKE_TYPE_PROPERTY_MAP.CUSTOM}:`] || undefined;
+    const invokeTypeDesc: IInvokeType = {
+        type: operationDesc.value,
+        custom: customValue,
+    };
+
+    if (customValue && !customValue.includes(INVOKE_PLACEHOLDER)) {
+        throw new Error(`invokeType 中的 custom 参数缺少 ${INVOKE_PLACEHOLDER} 字符串.`);
+    }
+
+    if (!_.isUndefined(operationDesc[`:${INVOKE_TYPE_PROPERTY_MAP.RESOLVE}:`])) {
+        invokeTypeDesc.promsieResult = INVOKE_TYPE_PROPERTY_MAP.RESOLVE;
+    }
+    if (!_.isUndefined(operationDesc[`:${INVOKE_TYPE_PROPERTY_MAP.REJECT}:`])) {
+        invokeTypeDesc.promsieResult = INVOKE_TYPE_PROPERTY_MAP.REJECT;
     }
 
     result.push({
         operation: OPERATION.INVOKE_TYPE,
-        value: invokeType,
+        invokeType: invokeTypeDesc,
     });
 
     return result;
@@ -312,109 +271,23 @@ export const parserThis = (thisContent: string): IOperationDesc[] => {
         throw operationDesc;
     }
 
-    return [
+    const IOperationDesc: IOperationDesc[] = [
         {
             operation: OPERATION.THIS,
-            variableName: operationDesc.value,
-            path: operationDesc[`:${EXPRESSION_OPERATION_MAP.FROM}:`],
-            expression: operationDesc[`:${EXPRESSION_OPERATION_MAP.EXPRESSION}:`],
+            value: operationDesc.value,
         },
     ];
-};
 
-/**
- * 解析表达式成操作描述对象
- * @param expression 表达式
- */
-export const parserExpressionOperationDesc = (expression = ''): IExpressOperationDesc | Error => {
-    // 获取表达式的值
-    expression = expression.trim();
-    const firstOperationIndex = expression.indexOf(':');
-    const expressionValue = expression.slice(0, firstOperationIndex);
-
-    // 不存在操作符，整个表达式即为值 (值只能是纯文本)
-    if (firstOperationIndex === -1) {
-        return {
-            value: expression,
-        };
-    }
-
-    // 获取表达式中可能的操作索引值
-    const matchOperationList: IMatchOperationListItem[] = [];
-    const re = new RegExp(`:(${EXPRESSION_OPERATION_NAME_LIST.join('|')}):`, 'g');
-    let match = null;
-    while ((match = re.exec(expression)) != null) {
-        matchOperationList.push({
-            index: match.index,
-            value: match[0],
+    // 外部数据导入，需要添加 import
+    if (operationDesc[`:${EXPRESSION_OPERATION_MAP.FROM}:`]) {
+        IOperationDesc.push({
+            operation: OPERATION.IMPORT,
+            variableName: operationDesc.value,
+            path: operationDesc[`:${EXPRESSION_OPERATION_MAP.FROM}:`],
         });
     }
 
-    // 如果操作列表为0，则表示填写的没有被支持
-    if (matchOperationList.length === 0) {
-        return new Error(`表达式 "${expression}" 中的操作符都不被支持.`);
-    }
-
-    // 检查下表达式的内容是否重复，如果有相同的 key, 则报错，存在语法错误
-    if (isRepeat(matchOperationList.map((item) => item.value))) {
-        return new Error(`表达式 "${expression}" 中存在多个相同的操作符.`);
-    }
-
-    let result: IExpressOperationDesc = {
-        value: '',
-    };
-
-    // 只有一个操作符的情况
-    if (matchOperationList.length === 1) {
-        const [value, operationValue] = expression.split(matchOperationList[0].value);
-        result = {
-            value,
-            [matchOperationList[0].value]: operationValue,
-        };
-    } else {
-        result.value = expressionValue;
-        // 解析操作符
-        matchOperationList.forEach((item, index) => {
-            // 获取操作的值的索引位置
-            const startIndex = item.index + item.value.length;
-            const endIndex = matchOperationList[index + 1] ? matchOperationList[index + 1].index : expression.length;
-
-            const operationValue = expression.slice(startIndex, endIndex);
-            result[item.value] = operationValue;
-        });
-    }
-
-    // 如果存在 expression 操作符号，要检查下 expression 对应的值是否是 js 表达式
-    const expressionOperationValue = result[`:${EXPRESSION_OPERATION_MAP.EXPRESSION}:`];
-    if (expressionOperationValue) {
-        if (!isVariableExpressionsString(expressionOperationValue)) {
-            return new Error(`expression 参数的值 "${expressionOperationValue}" 不是一个可执行的 JS 表达式.`);
-        }
-    }
-
-    return result;
-};
-
-/**
- * 将表达式作为数据导入参数
- * @param expression 表达式
- */
-export const paraseDataParamsExpression = (expression = ''): IDataParamsDesc => {
-    // 解析操作描述
-    const operationDesc = parserExpressionOperationDesc(expression);
-
-    if (operationDesc instanceof Error || _.isUndefined(operationDesc[KEY_WORDS.FROM])) {
-        return {
-            isValidate: false,
-            message: `表达式 "${expression}" 解析错误或不存在数据从外部导入的语法`,
-        };
-    }
-    return {
-        isValidate: true,
-        path: operationDesc[KEY_WORDS.FROM],
-        variableName: operationDesc.value,
-        asName: operationDesc[KEY_WORDS.AS],
-    };
+    return IOperationDesc;
 };
 
 /**

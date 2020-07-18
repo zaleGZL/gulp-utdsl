@@ -11,8 +11,8 @@ import {
 } from '../typings/index';
 import _ from 'lodash';
 import { OPERATION, MOCK_TYPE_LIST, MOCK_TYPE_MAP, EXPRESSION_OPERATION_MAP } from '../common/constants';
-import { parserExpressionOperationDesc } from './grammar';
 import { getHashNameFromFilePath } from '../common/parser';
+import { parserExpressionOperationDesc } from './common';
 
 /**
  * 解析 type 为 function 的 mock 语法
