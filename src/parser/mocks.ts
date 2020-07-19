@@ -92,6 +92,13 @@ export const parseFileTypes = (params: IParseMocksTypesParams): IParseTypesRetur
         });
     }
 
+    // mock 掉整个文件，需要在前面 import 下，这样后面才能做 expect 操作
+    operationList.push({
+        operation: OPERATION.IMPORT,
+        path: targetPath,
+        moduleAsName: targetOperationDesc.value,
+    });
+
     return {
         mockDesc: mockDesc,
         operationList,

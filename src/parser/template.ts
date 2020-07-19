@@ -375,6 +375,9 @@ export const parseExpectCode = (descList: IOperationDesc[], caseConfig: ICommonO
     const expectDesc = descList.find((item) => {
         return item.operation === OPERATION.EXPECT;
     });
+    const mockDesc = descList.find((item) => {
+        return item.operation === OPERATION.MOCKS;
+    });
 
     // 不存在 expect 语句 （有可能是直接比较输入输出）
     if (!expectDesc || !expectDesc.expectList || expectDesc.expectList?.length === 0) {
@@ -403,24 +406,31 @@ export const parseExpectCode = (descList: IOperationDesc[], caseConfig: ICommonO
         // 对应的比较表达式
         const compareFunc = EXPECT_COMPARE_FUNC_MAP[item.compare];
 
+        // 如果是对 mock 文件的对象进行 expect, 需要获取到实际被 expect 的对象
+        const targetModule = _.get(mockDesc, 'mockList', []).find((mockItem: any) => {
+            return item.target && mockItem.targetName === item.target;
+        });
+
+        const target = targetModule ? `${targetModule.targetModuleName}.${item.target}` : item.target;
+
         switch (item.type) {
             // 默认
             case EXPECT_TYPE_MAP.DEFAULT: {
-                result.push(`expect(${item.target}).${compareFunc}(${expectValue});`);
+                result.push(`expect(${target}).${compareFunc}(${expectValue});`);
                 break;
             }
             // 调用次数
             case EXPECT_TYPE_MAP.TIME: {
-                result.push(`expect(${item.target}).toBeCalledTimes(${expectValue});`);
+                result.push(`expect(${target}).toBeCalledTimes(${expectValue});`);
                 break;
             }
             // 以xx参数的形式调用
             case EXPECT_TYPE_MAP.CALL: {
                 // 指定了是第几次调用以及参数的位置
                 if (item.position) {
-                    result.push(`expect(${item.target}.mock.calls${item.position}).${compareFunc}(${expectValue});`);
+                    result.push(`expect(${target}.mock.calls${item.position}).${compareFunc}(${expectValue});`);
                 } else {
-                    result.push(`expect(${item.target}).toHaveBeenCalledWith(${expectValue});`);
+                    result.push(`expect(${target}).toHaveBeenCalledWith(${expectValue});`);
                 }
                 break;
             }
