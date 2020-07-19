@@ -19,6 +19,7 @@ import _ from 'lodash';
 export const getWrapperTestCaseCode = (innerCode: string, title: string): string => {
     return `
         test('${title}', async () => {
+            jest.clearAllMocks();
             ${innerCode}
         })
     `;
@@ -175,17 +176,14 @@ export const parseInvokeCode = (descList: IOperationDesc[], caseConfig: ICommonO
 
                 invokeExpression = `${caseConfig.target}${callCode}`;
 
+                // 看下是否是自定义调用语法
+                if (invokeType.custom) {
+                    invokeExpression = invokeType.custom.replace(INVOKE_PLACEHOLDER, invokeExpression);
+                }
+
                 // 存在比较函数，根据对应的参数调用函数，并判断对应的输出是否符合预期
                 if (compareTypeName) {
-                    invokeExpression = `expect(${caseConfig.target}${callCode}).${compareTypeName}(${outputVariable})`;
-                } else {
-                    // 自定义调用语法
-                    if (invokeType.custom) {
-                        invokeExpression = invokeType.custom.replace(
-                            INVOKE_PLACEHOLDER,
-                            `${caseConfig.target}${callCode}`
-                        );
-                    }
+                    invokeExpression = `expect(${invokeExpression}).${compareTypeName}(${outputVariable})`;
                 }
 
                 result.push(invokeExpression);
