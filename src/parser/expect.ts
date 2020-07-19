@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { EXPECT_TYPE_MAP, OPERATION } from '../common/constants';
+import { EXPECT_COMPARE_MAP, EXPECT_PROP_MAP, EXPECT_TYPE_MAP, OPERATION } from '../common/constants';
 import { IExpectListItem, IOperationDesc } from '../typings/index';
 import { parseFuncParams, parserExpressionOperationDesc } from './common';
 
@@ -38,7 +38,7 @@ export const parseExpect = (expect: string | string[]): IOperationDesc[] => {
         }
 
         // 解析第一个操作表达式
-        const firstDesc = parserExpressionOperationDesc(firstExpression.trim());
+        const firstDesc = parserExpressionOperationDesc(firstExpression.trim(), Object.values(EXPECT_PROP_MAP));
         if (firstDesc instanceof Error) {
             throw firstDesc;
         }
@@ -50,31 +50,48 @@ export const parseExpect = (expect: string | string[]): IOperationDesc[] => {
         }
 
         const expectItem: IExpectListItem = {
-            type: '',
+            type: EXPECT_TYPE_MAP.DEFAULT,
+            compare: EXPECT_COMPARE_MAP.EQUAL,
             target: firstDesc.value,
         };
 
         // 设置预期值数据
         expectItem.expectParamsValue = funcParamsDesc.ioDescList;
 
-        // 设置 expect 的类型
-        const expectType = Object.values(EXPECT_TYPE_MAP).find((item) => {
-            return !_.isUndefined(firstDesc[`:${item}:`]);
-        });
-        if (!expectType) {
-            throw new Error(
-                `expect语句 "${item}" 中没有支持的 expect 类型， expect 目前仅支持 ${Object.values(
-                    EXPECT_TYPE_MAP
-                ).join('、')}`
-            );
+        // 设置 expect
+        const inputType = firstDesc[`:${EXPECT_PROP_MAP.TYPE}:`];
+        if (!_.isUndefined(inputType)) {
+            if (!Object.values(EXPECT_TYPE_MAP).includes(inputType)) {
+                throw new Error(
+                    `expect语句 "${item}" 中 type 的值 ${inputType} 不被支持， expect 目前仅支持的 type 为 ${Object.values(
+                        EXPECT_TYPE_MAP
+                    ).join('、')}`
+                );
+            } else {
+                expectItem.type = inputType;
+            }
         }
-        expectItem.type = expectType;
 
+        // 设置 compare
+        const inputCompare = firstDesc[`:${EXPECT_PROP_MAP.COMPARE}:`];
+        if (!_.isUndefined(inputCompare)) {
+            if (!Object.values(EXPECT_COMPARE_MAP).includes(inputCompare)) {
+                throw new Error(
+                    `expect语句 "${item}" 中 compare 的值 ${inputCompare} 不被支持， expect 目前仅支持的 compare 为 ${Object.values(
+                        EXPECT_COMPARE_MAP
+                    ).join('、')}`
+                );
+            } else {
+                expectItem.compare = inputCompare;
+            }
+        }
+
+        // 设置 position
         // expect 为 call 时并且值为 [x][y] 格式的时候，需要解析出是第几次调用以及参数的位置
-        const callValueReg = /\[\d+\]\[\d+\]/g;
-        const callValue = (firstDesc[`:${EXPECT_TYPE_MAP.CALL}:`] || '').trim();
-        if (expectItem.type === EXPECT_TYPE_MAP.CALL && callValue.length > 0 && callValueReg.test(callValue)) {
-            expectItem.callTimeAndPosition = callValue;
+        // const positionReg = /\[\d+\]\[\d+\]/g;
+        const inputPosition = firstDesc[`:${EXPECT_PROP_MAP.POSITION}:`];
+        if (!_.isUndefined(inputPosition)) {
+            expectItem.position = inputPosition;
         }
 
         expectList.push(expectItem);

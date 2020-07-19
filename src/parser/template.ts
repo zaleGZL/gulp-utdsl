@@ -1,12 +1,13 @@
 import { IOperationDesc, IImportPathMap, ICommonObj, IImportPathItem } from '../typings/index';
 import {
     OPERATION,
-    INVOKE_TYPE_MAP,
     COMPARE_TYPE,
     MOCK_TYPE_MAP,
     INVOKE_TYPE_VALUE_MAP,
     INVOKE_TYPE_PROPERTY_MAP,
     INVOKE_PLACEHOLDER,
+    EXPECT_TYPE_MAP,
+    EXPECT_COMPARE_FUNC_MAP,
 } from '../common/constants';
 import _ from 'lodash';
 
@@ -30,9 +31,6 @@ export const getWrapperTestCaseCode = (innerCode: string, title: string): string
 export const parseToImportModuleCode = (ioDescList: IOperationDesc[] = []): string => {
     const result: string[] = [];
     const importPathMap: IImportPathMap = {};
-
-    // zale TODO: test
-    // console.log('ioDescList', ioDescList);
 
     // 格式化数据，并合并相同的路径变量导入
     ioDescList.forEach((item) => {
@@ -190,7 +188,7 @@ export const parseInvokeCode = (descList: IOperationDesc[], caseConfig: ICommonO
             // 默认在 resolve 进行预期行为的判断
             let promiseThenCode = `.then((res) => {
                 ${expectCode}
-            }, (error) => {
+            }, (res) => {
                 expect(true).toBe(false);
             });
             `;
@@ -198,7 +196,7 @@ export const parseInvokeCode = (descList: IOperationDesc[], caseConfig: ICommonO
             if (invokeType.promsieResult === INVOKE_TYPE_PROPERTY_MAP.REJECT) {
                 promiseThenCode = `.then((res) => {
                     expect(true).toBe(false);
-                }, (error) => {
+                }, (res) => {
                     ${expectCode}
                 });
                 `;
@@ -372,7 +370,64 @@ export const parsePrefixContentCode = (descList: IOperationDesc[], caseConfig: I
  * @param caseConfig
  */
 export const parseExpectCode = (descList: IOperationDesc[], caseConfig: ICommonObj): string => {
-    return '';
+    const result: string[] = [];
+
+    const expectDesc = descList.find((item) => {
+        return item.operation === OPERATION.EXPECT;
+    });
+
+    // 不存在 expect 语句 （有可能是直接比较输入输出）
+    if (!expectDesc || !expectDesc.expectList || expectDesc.expectList?.length === 0) {
+        return '';
+    }
+
+    expectDesc.expectList.forEach((item) => {
+        // 预期的参数值
+        const expectParamsList: any = _.get(item, 'expectParamsValue', []);
+        const expectValue = expectParamsList
+            .map((item: any) => {
+                let value: any = '';
+                if (item.isJsVariable) {
+                    value = item.expression;
+                }
+                if (item.isExternalData) {
+                    value = item.variableName;
+                }
+                return value;
+            })
+            .filter((item: any) => {
+                return item !== '' && typeof item !== 'undefined';
+            })
+            .join(',');
+
+        // 对应的比较表达式
+        const compareFunc = EXPECT_COMPARE_FUNC_MAP[item.compare];
+
+        switch (item.type) {
+            // 默认
+            case EXPECT_TYPE_MAP.DEFAULT: {
+                result.push(`expect(${item.target}).${compareFunc}(${expectValue});`);
+                break;
+            }
+            // 调用次数
+            case EXPECT_TYPE_MAP.TIME: {
+                result.push(`expect(${item.target}).toBeCalledTimes(${expectValue});`);
+                break;
+            }
+            // 以xx参数的形式调用
+            case EXPECT_TYPE_MAP.CALL: {
+                // 指定了是第几次调用以及参数的位置
+                if (item.position) {
+                    result.push(`expect(${item.target}.mock.calls${item.position}).${compareFunc}(${expectValue});`);
+                } else {
+                    result.push(`expect(${item.target}).toHaveBeenCalledWith(${expectValue});`);
+                }
+                break;
+            }
+        }
+    });
+
+    return result.join('\n');
 };
 
 /**
@@ -396,9 +451,6 @@ export const parseToCode = (descList: IOperationDesc[] = [], caseConfig: ICommon
         )
     );
 
-    // prefixContent 的代码
-    result.push(parsePrefixContentCode(descList, caseConfig));
-
     // mocks 对象的代码 (type 为 function)
     const funMockCode = parseFuncTypeMockCode(descList, caseConfig);
 
@@ -414,9 +466,6 @@ export const parseToCode = (descList: IOperationDesc[] = [], caseConfig: ICommon
     // 函数主体代码
     const invokeCode = parseInvokeCode(descList, caseConfig, expectCode);
 
-    // zale TODO: test
-    // console.log('expectCode', expectCode);
-
     // 按顺序组合后的代码
     const mainCode = [variableMockCode, funMockCode, invokeCode];
 
@@ -424,6 +473,8 @@ export const parseToCode = (descList: IOperationDesc[] = [], caseConfig: ICommon
     testCaseCode = getWrapperTestCaseCode(mainCode.join('\n'), caseConfig.name);
 
     result.push(fileMockCode);
+    // prefixContent 的代码
+    result.push(parsePrefixContentCode(descList, caseConfig));
     result.push(testCaseCode);
 
     return result.join('\n');

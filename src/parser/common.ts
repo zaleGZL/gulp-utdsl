@@ -120,6 +120,7 @@ export const parserExpressionOperationDesc = (
     if (isExpressionString || firstOperationIndex === -1) {
         return {
             value: expression,
+            [`:${EXPRESSION_OPERATION_MAP.EXPRESSION}:`]: expression,
         };
     }
 
@@ -153,7 +154,7 @@ export const parserExpressionOperationDesc = (
         const [value, operationValue] = expression.split(matchOperationList[0].value);
         result = {
             value,
-            [matchOperationList[0].value]: operationValue === '' ? 'default' : operationValue,
+            [matchOperationList[0].value]: (operationValue || '').trim(),
         };
     } else {
         result.value = expressionValue;
@@ -164,7 +165,7 @@ export const parserExpressionOperationDesc = (
             const endIndex = matchOperationList[index + 1] ? matchOperationList[index + 1].index : expression.length;
 
             const operationValue = expression.slice(startIndex, endIndex);
-            result[item.value] = operationValue === '' ? 'default' : operationValue;
+            result[item.value] = (operationValue || '').trim();
         });
     }
 

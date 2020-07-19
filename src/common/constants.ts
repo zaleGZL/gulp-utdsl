@@ -27,8 +27,8 @@ export const EXPRESSION_OPERATION_MAP = {
 
 // 函数参数对比操作
 export const FUNCTION_PARAMS_COMPARE_OPERATION = {
-    IS: '->',
-    EQUAL: '-->',
+    IS: '-->',
+    EQUAL: '->',
 };
 export const FUNCTION_PARAMS_COMPARE_OPERATION_MAP = {
     IS: 'IS',
@@ -62,33 +62,30 @@ export const MOCK_TYPE_MAP = {
 };
 
 // 操作符号列表
-export const EXPRESSION_OPERATION_NAME_LIST = [
-    'from',
-    'time',
-    'as',
-    'call',
-    'hasProps',
-    'equal',
-    'is',
-    '>',
-    '>=',
-    '<',
-    '<=',
-    'expression',
-    'moduleAs',
-];
+export const EXPRESSION_OPERATION_NAME_LIST = ['from', 'as', 'expression', 'moduleAs'];
 
 // expect 支持的类型
-export const EXPECT_TYPE_LIST = ['call', 'hasProps', 'equal', 'is', '>', '>=', '<', '<='];
+export const EXPECT_TYPE_LIST = ['call', 'hasProp', 'equal', 'is', '>', '>=', '<', '<='];
+
+export const EXPECT_PROP_MAP = {
+    TYPE: 'type',
+    COMPARE: 'compare',
+    POSITION: 'position',
+};
 
 // expect 类型
 export const EXPECT_TYPE_MAP = {
+    // default
+    DEFAULT: 'default',
     // toBeCalledTimes
     TIME: 'time',
     // toHaveBeenCalledWith
     CALL: 'call',
+};
+
+export const EXPECT_COMPARE_MAP = {
     // toHaveProperty
-    HAS_PROPS: 'hasProps',
+    HAS_PROP: 'hasProp',
     // toEqual
     EQUAL: 'equal',
     // ToBe
@@ -101,6 +98,17 @@ export const EXPECT_TYPE_MAP = {
     SMALL: '<',
     // toBeLessThanOrEqual
     LESS_THAN: '<=',
+};
+
+// 比较的方式对应的表达式
+export const EXPECT_COMPARE_FUNC_MAP = {
+    [EXPECT_COMPARE_MAP.HAS_PROP]: 'toHaveProperty',
+    [EXPECT_COMPARE_MAP.EQUAL]: 'toEqual',
+    [EXPECT_COMPARE_MAP.IS]: 'ToBe',
+    [EXPECT_COMPARE_MAP.THAN]: 'toBeGreaterThan',
+    [EXPECT_COMPARE_MAP.GREATER_THAN]: 'toBeGreaterThanOrEqual',
+    [EXPECT_COMPARE_MAP.SMALL]: 'toBeLessThan',
+    [EXPECT_COMPARE_MAP.LESS_THAN]: 'toBeLessThanOrEqual',
 };
 
 // 调用方式的属性

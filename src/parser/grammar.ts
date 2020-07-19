@@ -87,12 +87,12 @@ export const paraseIO = (io: string | string[]): IOperationDesc[] => {
         let compareOperation = '';
 
         // 根据参数比较符号进行分割
-        if (expressionItem.includes(FUNCTION_PARAMS_COMPARE_OPERATION.EQUAL)) {
-            compareOperation = FUNCTION_PARAMS_COMPARE_OPERATION_MAP.EQUAL;
-            inputAndOutput = expressionItem.split(FUNCTION_PARAMS_COMPARE_OPERATION.EQUAL);
-        } else if (expressionItem.includes(FUNCTION_PARAMS_COMPARE_OPERATION.IS)) {
+        if (expressionItem.includes(FUNCTION_PARAMS_COMPARE_OPERATION.IS)) {
             compareOperation = FUNCTION_PARAMS_COMPARE_OPERATION_MAP.IS;
             inputAndOutput = expressionItem.split(FUNCTION_PARAMS_COMPARE_OPERATION.IS);
+        } else if (expressionItem.includes(FUNCTION_PARAMS_COMPARE_OPERATION.EQUAL)) {
+            compareOperation = FUNCTION_PARAMS_COMPARE_OPERATION_MAP.EQUAL;
+            inputAndOutput = expressionItem.split(FUNCTION_PARAMS_COMPARE_OPERATION.EQUAL);
         } else {
             inputAndOutput = [expressionItem];
         }

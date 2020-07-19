@@ -155,6 +155,7 @@ export interface IParsePrefixContentParams {
 export interface IExpectListItem {
     target: string; // 被 expect 的对象
     type: string; // expect 的类型
+    compare: string; // 比较的类型
     expectParamsValue?: IParamsDesc[]; // 预期值
-    callTimeAndPosition?: string; // 调用次数和位置
+    position?: string; // 调用次数和位置
 }
