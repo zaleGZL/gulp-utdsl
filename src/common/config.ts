@@ -46,7 +46,7 @@ export const combineDefaultTestCaseConfig = (_documentConfig: ICommonObj): IComm
                 // 测试文件名称（同时也会作为文件名称），同一个模块下的每个测试名称都要是不同，如果没有提供，则使用案例的 target 加上索引值作为文件名称
                 name,
                 // 函数的输入和输出
-                io: [],
+                io: '',
                 // 调用函数时的 this 对象
                 this: undefined,
                 // 前置内容

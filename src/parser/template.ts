@@ -138,9 +138,6 @@ export const parseInvokeCode = (descList: IOperationDesc[], caseConfig: ICommonO
         return item.operation === OPERATION.THIS;
     });
 
-    // zale TODO: test
-    // console.log('ioDesc.ioList', JSON.stringify(ioDesc.ioList, undefined, 2));
-
     // 不存在 invokeType
     if (!invokeTypeDesc || !invokeTypeDesc.invokeType) {
         return '';
@@ -149,13 +146,15 @@ export const parseInvokeCode = (descList: IOperationDesc[], caseConfig: ICommonO
     const { invokeType } = invokeTypeDesc;
     switch (invokeType.type) {
         // 同步调用函数，判断输出的参数与预期的相符
-        case INVOKE_TYPE_VALUE_MAP.DEFAULT: {
+        case INVOKE_TYPE_VALUE_MAP.SYNC: {
             if (!ioDesc || ioDesc.ioList?.length === 0) {
                 return '';
             }
 
             // 组装函数的调用参数
             ioDesc.ioList?.forEach((item) => {
+                let invokeExpression = '';
+
                 const inputs = item.inputs
                     .map((inputItem: ICommonObj) => {
                         return getParamsVariable(inputItem);
@@ -166,16 +165,30 @@ export const parseInvokeCode = (descList: IOperationDesc[], caseConfig: ICommonO
                     ? (COMPARE_TYPE as any)[item.ioCompareType as string]
                     : undefined;
 
+                // 调用函数的代码
+                let callCode = '';
+                if (thisDesc && thisDesc.value) {
+                    callCode = `.call(${thisDesc.value} ${inputs.length > 0 ? ',' : ''} ${inputs.join(',')})`;
+                } else {
+                    callCode = `(${inputs.join(',')})`;
+                }
+
+                invokeExpression = `${caseConfig.target}${callCode}`;
+
                 // 存在比较函数，根据对应的参数调用函数，并判断对应的输出是否符合预期
                 if (compareTypeName) {
-                    let callCode = '';
-                    if (thisDesc && thisDesc.value) {
-                        callCode = `.call(${thisDesc.value} ${inputs.length > 0 ? ',' : ''} ${inputs.join(',')})`;
-                    } else {
-                        callCode = `(${inputs.join(',')})`;
+                    invokeExpression = `expect(${caseConfig.target}${callCode}).${compareTypeName}(${outputVariable})`;
+                } else {
+                    // 自定义调用语法
+                    if (invokeType.custom) {
+                        invokeExpression = invokeType.custom.replace(
+                            INVOKE_PLACEHOLDER,
+                            `${caseConfig.target}${callCode}`
+                        );
                     }
-                    result.push(`expect(${caseConfig.target}${callCode}).${compareTypeName}(${outputVariable})`);
                 }
+
+                result.push(invokeExpression);
             });
 
             // 同步调用，直接在下一行插入 expect 的代码

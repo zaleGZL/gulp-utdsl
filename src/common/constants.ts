@@ -119,7 +119,7 @@ export const INVOKE_TYPE_PROPERTY_MAP = {
 };
 
 export const INVOKE_TYPE_VALUE_MAP = {
-    DEFAULT: 'default',
+    SYNC: 'sync',
     PROMISE: 'promise',
     // RENDER: 'render',
     // ASYNC: 'async',
