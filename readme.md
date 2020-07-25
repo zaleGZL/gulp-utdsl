@@ -108,6 +108,8 @@ gulp.task(
 
 ## [基本语法](./doc/grammar.md)
 
+## [测试用例类型](./doc/testType.md)
+
 ## [项目配置](./doc/config.md)
 
 ## [TODO](./doc/todoList.md)
