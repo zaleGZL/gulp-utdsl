@@ -106,8 +106,8 @@ gulp.task(
 
 创建 `*.test.yml` 的文件，然后就可以开始写测试配置文件了。
 
-## [基本语法](./doc/intro.md)
+## [基本语法](./doc/grammar.md)
 
 ## [项目配置](./doc/config.md)
 
-## [TODO](./doc/todo.md)
+## [TODO](./doc/todoList.md)
