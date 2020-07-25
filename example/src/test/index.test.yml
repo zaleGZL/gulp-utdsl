@@ -1,0 +1,7 @@
+path: '../index.ts'
+cases:
+    - target: add
+      name: add_two_number
+      io:
+          - '(1, 2) --> 3'
+          - '(3, 4) --> 7'

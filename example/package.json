@@ -1,0 +1,45 @@
+{
+    "name": "gulp-utdsl-example",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "jest ./__tests__ --coverage",
+        "utdsl": "gulp utdsl",
+        "utdsl:watch": "gulp utdsl:watch"
+    },
+    "author": "zaleguo",
+    "license": "ISC",
+    "dependencies": {
+        "gulp-utdsl": "file:../"
+    },
+    "jest": {
+        "moduleDirectories": [
+            "node_modules"
+        ],
+        "setupFiles": [],
+        "transform": {
+            "^.+\\.js": "<rootDir>/node_modules/babel-jest",
+            "^.+\\.ts?$": "ts-jest"
+        },
+        "collectCoverage": true,
+        "coveragePathIgnorePatterns": [
+            "node_modules"
+        ],
+        "setupFilesAfterEnv": [],
+        "coverageReporters": [
+            "html",
+            "text-summary",
+            "json",
+            "clover",
+            "json-summary"
+        ],
+        "preset": "ts-jest"
+    },
+    "devDependencies": {
+        "babel-jest": "^26.1.0",
+        "gulp": "^4.0.2",
+        "jest": "^26.1.0",
+        "ts-jest": "^26.1.3"
+    }
+}

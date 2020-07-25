@@ -52,7 +52,7 @@ export const combineDefaultTestCaseConfig = (_documentConfig: ICommonObj): IComm
                 // 前置内容
                 prefixContent: '',
                 // 调用方式
-                invokeType: 'default',
+                invokeType: 'sync',
                 // 预期的行为
                 expect: [],
                 ...caseItem,
