@@ -161,7 +161,7 @@ this: 'mockThisData:from:./data.js'
 
         -   自定义调用方式
 
-        比如 `dispatch(delete(a, b)).then((res) => {}, (error) => {})`。
+        比如 `dispatch(delete(a, b)).then((res) => {}, (res) => {})`。
 
         ```yml
         invokeType: 'promise:custom:dispatch(<invoke>):resolve:true'

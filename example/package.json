@@ -5,6 +5,7 @@
     "main": "index.js",
     "scripts": {
         "test": "jest ./__tests__ --coverage",
+        "test:watch": "jest ./__tests__ --coverage --watch",
         "utdsl": "gulp utdsl",
         "utdsl:watch": "gulp utdsl:watch"
     },
@@ -37,6 +38,7 @@
         "preset": "ts-jest"
     },
     "devDependencies": {
+        "axios": "^0.19.2",
         "babel-jest": "^26.1.0",
         "gulp": "^4.0.2",
         "jest": "^26.1.0",
