@@ -78,6 +78,12 @@ this: 'mockThisData:from:./data.js'
     this: '{ name: "test" }'
     ```
 
+    这是生成的测试用例中函数的调用就会变成下面这样。
+
+    ```javascript
+    add.call({name: "test"}, param1, param2)
+    ```
+
 -   io: 输入和输出参数
 
     支持设置多个，参数类型就变为数组的形式。
