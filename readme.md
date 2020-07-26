@@ -75,6 +75,8 @@ UTDSL(Util Test Domain Specific Language) 是一套单元测试领域专用语�
 
 ## 如何使用
 
+注意：请先自行安装 jest、babel 相关测试库及设置相应的配置，然后再执行以下的操作。
+
 一：安装 gulp-utdsl 和 gulp
 
 ```bash
