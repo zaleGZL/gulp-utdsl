@@ -1,4 +1,4 @@
-path: '../index.ts'
+path: ../index.ts
 cases:
     - target: add
       name: add_two_number
