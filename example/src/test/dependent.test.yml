@@ -1,0 +1,11 @@
+path: '../dependent.js'
+cases:
+    - target: requestQQUserInfo
+      io: '({userId: 1})'
+      mocks:
+          - type: file
+            target: 'axios:from:axios'
+            mock: 'mockAxios:from:./data'
+      invokeType: 'promise:resolve:true'
+      expect:
+          - "res:compare:equal ---> { userId: 1 }"

@@ -1,29 +1,34 @@
-path: ../index.ts
+path: ../index.js
 cases:
     - target: add
       name: add_two_number
       io:
           - '(1, 2) --> 3'
           - '(3, 4) --> 7'
-    - target: getQQIndexInfo
-      name: getQQIndexInfo_success
-      io:
-          - '({data: { userId: 123 }})'
+    - target: getQQUserInfo
+      name: getQQUserInfo_success
+      io: '({ userId: 123 })'
       invokeType: 'promise:resolve:true'
       mocks:
           - type: function
-            target: 'requestQQIndexInfo:from:../dependent'
-            mock: 'mockSuccessRequestQQIndexInfo:from:./data'
+            target: 'requestQQUserInfo:from:../dependent'
+            mock: 'mockSuccessRequestQQUserInfo:from:./data'
       expect:
           - 'res:compare:equal ---> { userId: 123, userName: "tim" }'
-    - target: getQQIndexInfo
-      name: getQQIndexInfo_error
-      io:
-          - '({data: { userId: 456 }})'
+    - target: getQQUserInfo
+      name: getQQUserInfo_error
+      io: '({ userId: 456 })'
       invokeType: 'promise:reject:true'
       mocks:
           - type: function
-            target: 'requestQQIndexInfo:from:../dependent'
-            mock: 'mockErrorRequestQQIndexInfo:from:./data'
+            target: 'requestQQUserInfo:from:../dependent'
+            mock: 'mockErrorRequestQQUserInfo:from:./data'
       expect:
           - 'res:compare:equal ---> { message: "request fail" }'
+    - target: formatUserListInfo
+      io:
+          - '() -> []'
+          - '({}) -> []'
+          - '([]) -> []'
+          - '(undefined) -> []'
+          - '([{ name: "Jim", age: 10 }]) -> [{ name: "Jim", age: 10, info: "Jim 10" }]'

@@ -1,4 +1,4 @@
-import { add } from '../../../src/index.ts';
+import { add } from '../../../src/index.js';
 
 test('add_two_number', async () => {
     jest.clearAllMocks();

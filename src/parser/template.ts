@@ -301,8 +301,9 @@ export const parseFileTypeMockCode = (descList: IOperationDesc[], caseConfig: IC
             return item.type === MOCK_TYPE_MAP.FILE;
         })
         .forEach((mockItem) => {
-            const { targetPath, needOriginModule, mockName, mockExpression } = mockItem;
+            const { targetPath, needOriginModule, mockName, mockExpression, mockPath } = mockItem;
             let mockModuleContent = '{}';
+            let requireDataExpression = '';
 
             if (mockExpression) {
                 mockModuleContent = mockExpression;
@@ -310,8 +311,14 @@ export const parseFileTypeMockCode = (descList: IOperationDesc[], caseConfig: IC
                 mockModuleContent = mockName || mockModuleContent;
             }
 
+            // 这里如果是从外面导入数据，那么这个数据只能在这里 require 进来
+            if (mockPath) {
+                requireDataExpression = `const { ${mockName} } = require('${mockPath}')`;
+            }
+
             result.push(`
                 jest.mock('${targetPath}', () => {
+                    ${requireDataExpression}
                     return {
                         ${needOriginModule ? `...(jest.requireActual('${targetPath}')),` : ''}
                         ...${mockModuleContent},

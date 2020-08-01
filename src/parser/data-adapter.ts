@@ -36,7 +36,8 @@ export const formatContentDescList = (params: IFormatContentDescList): IOperatio
      */
     const transformData = (key: string, value: any): string => {
         // 路径转换
-        if ((key === 'path' || key.endsWith('Path')) && value) {
+        // 这里如果没有 '/' 符号，那么可能是 node_modules 内的模块，那么是不需要转换路径的
+        if ((key === 'path' || key.endsWith('Path')) && value && value.includes('/')) {
             return getImportFilePath({
                 filePath: value,
                 testFileAbsolutePath,

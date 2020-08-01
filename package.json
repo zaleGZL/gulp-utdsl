@@ -1,6 +1,6 @@
 {
     "name": "gulp-utdsl",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "gulp-utdsl",
     "main": "dist/index.js",
     "module": "dist/index.esm.js",

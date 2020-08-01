@@ -69,28 +69,25 @@ export const parseFileTypes = (params: IParseMocksTypesParams): IParseTypesRetur
 
     // 路径及模块名称解析
     const targetPath = targetOperationDesc[`:${EXPRESSION_OPERATION_MAP.FROM}:`];
-    const asName = (mockOperationDesc.value || '').startsWith('mock')
-        ? mockOperationDesc.value
-        : `mock_${mockOperationDesc.value || ''}`;
 
     const mockDesc = {
         type: MOCK_TYPE_MAP.FILE,
         targetPath,
         needOriginModule: Boolean(mockItem.needOriginModule),
         mockPath: mockOperationDesc[`:${EXPRESSION_OPERATION_MAP.FROM}:`],
-        mockName: mockOperationDesc.value && asName ? asName : undefined,
+        mockName: mockOperationDesc.value,
         mockExpression: mockOperationDesc[`:${EXPRESSION_OPERATION_MAP.EXPRESSION}:`],
     };
 
-    // 如果 mock 的文件是从外部导入的， 不是内联表达式
-    if (mockDesc.mockPath) {
-        operationList.push({
-            operation: OPERATION.IMPORT,
-            path: mockDesc.mockPath,
-            variableName: mockOperationDesc.value,
-            asName: mockDesc.mockName ? asName : undefined,
-        });
-    }
+    // // 如果 mock 的文件是从外部导入的， 不是内联表达式
+    // if (mockDesc.mockPath) {
+    //     operationList.push({
+    //         operation: OPERATION.IMPORT,
+    //         path: mockDesc.mockPath,
+    //         variableName: mockOperationDesc.value,
+    //         asName: mockDesc.mockName ? asName : undefined,
+    //     });
+    // }
 
     // mock 掉整个文件，需要在前面 import 下，这样后面才能做 expect 操作
     operationList.push({
