@@ -31,7 +31,16 @@ UTDSL(Util Test Domain Specific Language) 是一套单元测试领域专用语�
 
     UTDSL 是写在 YML 文件中，之所以选择 YML 是因为这门配置语言足够简洁和强大，而且写起来远远比 JSON 要方便。
 
-    写一个最简单的测试配置文件（测试一个两数相加的函数）：
+    比如我们测试一个两数相加的函数：
+
+    ```javascript
+    // index.ts
+    export const add = (a: number, b: number): number => {
+        return a + b;
+    }
+    ```
+
+    测试配置文件：
 
     ```yml
     # index.test.yml
@@ -57,7 +66,7 @@ UTDSL(Util Test Domain Specific Language) 是一套单元测试领域专用语�
     });
     ```
 
-    就这样一个简单的测试用例就让我们少写了很多测试代码，而且无需关心底层是如何操作的，这样编写的测试用例更加容易维护并且易懂。
+    就这样一个简单的测试用例就让我们少写些测试代码，而且无需关心底层是如何操作的，这样编写的测试用例更加容易维护并且易懂。
 
 2. UTDSL 的优势
 
